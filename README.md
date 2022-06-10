@@ -1,6 +1,7 @@
 # go-letterboxd
 
 [![codecov](https://codecov.io/gh/drewstinnett/go-letterboxd/branch/main/graph/badge.svg?token=YSWAtzIhn1)](https://codecov.io/gh/drewstinnett/go-letterboxd)
+[![Go Reference](https://pkg.go.dev/badge/github.com/drewstinnett/go-letterboxd.svg)](https://pkg.go.dev/github.com/drewstinnett/go-letterboxd)
 
 ## Overview
 
