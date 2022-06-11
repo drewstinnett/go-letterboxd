@@ -14,6 +14,6 @@ require (
 	github.com/kr/pretty v0.3.0 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
-	golang.org/x/net v0.0.0-20220520000938-2e3eb7b945c2 // indirect
+	golang.org/x/net v0.0.0-20220607020251-c690dde0001d // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )

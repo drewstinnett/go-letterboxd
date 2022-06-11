@@ -108,7 +108,7 @@ func TestStreamBatchWithChan(t *testing.T) {
 	errorC := make(chan error)
 	go sc.Film.StreamBatch(nil, &FilmBatchOpts{
 		Watched: []string{"someguy"},
-		Lists: []*ListID{
+		List: []*ListID{
 			{"dave", "official-top-250-narrative-feature-films"},
 		},
 		WatchList: []string{"someguy"},

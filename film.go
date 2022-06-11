@@ -65,7 +65,7 @@ func (f *FilmographyOpt) Validate() error {
 
 type FilmBatchOpts struct {
 	Watched   []string  `json:"watched"`
-	Lists     []*ListID `json:"lists"`
+	List      []*ListID `json:"list"`
 	WatchList []string  `json:"watchlist"`
 }
 
@@ -110,7 +110,7 @@ func (f *FilmServiceOp) StreamBatch(ctx context.Context, batchOpts *FilmBatchOpt
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		for _, listID := range batchOpts.Lists {
+		for _, listID := range batchOpts.List {
 			// userFilms := []Film{}
 			log.WithFields(log.Fields{
 				"username": listID.User,
