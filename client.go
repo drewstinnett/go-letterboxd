@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"time"
 
 	"github.com/apex/log"
 )
@@ -39,6 +40,12 @@ func NewClient(httpClient *http.Client) *Client {
 		httpClient = http.DefaultClient
 		// allows 60 requests every 10 seconds
 		// httpClient.Transport = NewThrottledTransport(1*time.Second, 60, http.DefaultTransport)
+		tr := &http.Transport{
+			MaxIdleConns:       10,
+			IdleConnTimeout:    30 * time.Second,
+			DisableCompression: true,
+		}
+		httpClient.Transport = tr
 	}
 
 	userAgent := "letterrestd"

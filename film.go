@@ -73,7 +73,7 @@ type FilmBatchOpts struct {
 func (f *FilmServiceOp) StreamBatch(ctx context.Context, batchOpts *FilmBatchOpts, filmsC chan *Film, done chan error) {
 	// var films []*Film
 	defer func() {
-		log.Info("Completed Stream Batch")
+		log.Debug("Completed Stream Batch")
 		done <- nil
 	}()
 	var wg sync.WaitGroup
@@ -90,8 +90,7 @@ func (f *FilmServiceOp) StreamBatch(ctx context.Context, batchOpts *FilmBatchOpt
 			userFilmC := make(chan *Film)
 			userDone := make(chan error)
 			go f.client.User.StreamWatched(ctx, username, userFilmC, userDone)
-			loop := true
-			for loop {
+			for loop := true; loop; {
 				select {
 				case film := <-userFilmC:
 					filmsC <- film
@@ -150,8 +149,7 @@ func (f *FilmServiceOp) StreamBatch(ctx context.Context, batchOpts *FilmBatchOpt
 			listFilmC := make(chan *Film)
 			listDone := make(chan error)
 			go f.client.User.StreamWatchList(ctx, user, listFilmC, listDone)
-			loop := true
-			for loop {
+			for loop := true; loop; {
 				select {
 				case film := <-listFilmC:
 					filmsC <- film
