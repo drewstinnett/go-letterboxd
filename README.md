@@ -11,3 +11,6 @@ be used to programatically access letterboxd public data.
 ## Usage
 
 ## Projects Using go-letterboxd
+
+* [letterboxdctl](https://github.com/drewstinnett/letterboxdctl) - A command line
+interface for interacting with letterboxd.
