@@ -89,7 +89,7 @@ func (f *FilmServiceOp) StreamBatch(ctx context.Context, batchOpts *FilmBatchOpt
 			}).Info("Fetching watched films")
 			userFilmC := make(chan *Film)
 			userDone := make(chan error)
-			go f.client.User.StreamWatchedWithChan(ctx, username, userFilmC, userDone)
+			go f.client.User.StreamWatched(ctx, username, userFilmC, userDone)
 			loop := true
 			for loop {
 				select {
@@ -176,10 +176,11 @@ func (f *FilmServiceOp) ExtractFilmsWithPath(ctx context.Context, path string) (
 	if err != nil {
 		return nil, nil, err
 	}
-	firstItems, _, err := f.client.sendRequest(req, ExtractUserFilms)
+	firstItems, resp, err := f.client.sendRequest(req, ExtractUserFilms)
 	if err != nil {
 		return nil, nil, err
 	}
+	defer resp.Body.Close()
 	films := firstItems.Data.([]*Film)
 	return films, &firstItems.Pagintion, nil
 }
@@ -204,10 +205,11 @@ func (f *FilmServiceOp) Get(ctx context.Context, slug string) (*Film, error) {
 	if err != nil {
 		return nil, err
 	}
-	item, _, err := f.client.sendRequest(req, extractFilmFromFilmPage)
+	item, resp, err := f.client.sendRequest(req, extractFilmFromFilmPage)
 	if err != nil {
 		return nil, err
 	}
+	defer resp.Body.Close()
 	return item.Data.(*Film), nil
 }
 
@@ -222,10 +224,11 @@ func (f *FilmServiceOp) Filmography(ctx context.Context, opt *FilmographyOpt) ([
 	if err != nil {
 		return nil, err
 	}
-	items, _, err := f.client.sendRequest(req, extractFilmography)
+	items, resp, err := f.client.sendRequest(req, extractFilmography)
 	if err != nil {
 		return nil, err
 	}
+	defer resp.Body.Close()
 
 	partialFilms := items.Data.([]*Film)
 

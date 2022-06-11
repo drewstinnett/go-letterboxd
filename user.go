@@ -18,8 +18,7 @@ type UserService interface {
 	Exists(context.Context, string) (bool, error)
 	Profile(context.Context, string) (*User, *Response, error)
 	StreamListWithChan(context.Context, string, string, chan *Film, chan error)
-	StreamWatched(context.Context, string) (chan []*Film, *Pagination, error)
-	StreamWatchedWithChan(context.Context, string, chan *Film, chan error)
+	StreamWatched(context.Context, string, chan *Film, chan error)
 	StreamWatchListWithChan(context.Context, string, chan *Film, chan error)
 	Watched(context.Context, string) ([]*Film, *Response, error)
 	WatchList(context.Context, string) ([]*Film, *Response, error)
@@ -27,7 +26,7 @@ type UserService interface {
 
 type User struct {
 	Username         string `json:"username"`
-	Bio              string `json:"bio"`
+	Bio              string `json:"bio,omitempty"`
 	WatchedFilmCount int    `json:"watched_film_count"`
 }
 
@@ -80,6 +79,7 @@ func (u *UserServiceOp) Profile(ctx context.Context, userID string) (*User, *Res
 	if err != nil {
 		return nil, resp, err
 	}
+	defer resp.Body.Close()
 	return user.Data.(*User), resp, nil
 }
 
@@ -118,11 +118,11 @@ func (u *UserServiceOp) WatchList(ctx context.Context, userID string) ([]*Film, 
 	return previews, nil, nil
 }
 
-func (u *UserServiceOp) StreamWatchedWithChan(ctx context.Context, userID string, rchan chan *Film, done chan error) {
+func (u *UserServiceOp) StreamWatched(ctx context.Context, userID string, rchan chan *Film, done chan error) {
 	var err error
 	var pagination *Pagination
 	defer func() {
-		log.Debug("Closing STREAMWATCHED")
+		log.Debug("Closing StreamWatched")
 		done <- nil
 	}()
 	log.Debug("About to start streaming fims")
@@ -175,55 +175,6 @@ func (u *UserServiceOp) StreamWatchedWithChan(ctx context.Context, userID string
 		}
 		wg.Wait()
 	}
-}
-
-func (u *UserServiceOp) StreamWatched(ctx context.Context, userID string) (chan []*Film, *Pagination, error) {
-	var err error
-	var pagination *Pagination
-	log.Debug("Starting STREAMWATCHED")
-	// Get the first page. This seeds the pagination.
-	firstFilms, pagination, err := u.client.Film.ExtractEnhancedFilmsWithPath(ctx, fmt.Sprintf("%s/%s/films/page/1", u.client.BaseURL, userID))
-	if err != nil {
-		return nil, nil, err
-	}
-	rchan := make(chan []*Film, pagination.TotalPages)
-	log.Debugf("ABOUT TO DUMP FIRST PARTIAL FILMS: %+v", firstFilms)
-	rchan <- firstFilms
-	// rchan <- partialFilms
-
-	itemsPerFullPage := len(firstFilms)
-	pagination.TotalItems = itemsPerFullPage
-
-	// If more than 1 page, get the last page too, which will likely be a
-	// partial batch of films
-	log.Debug("GONNA LOOK AT GT 1")
-	if pagination.TotalPages > 1 {
-		var lastFilms []*Film
-		lastFilms, _, err = u.client.Film.ExtractEnhancedFilmsWithPath(ctx, fmt.Sprintf("%s/%s/films/page/%v", u.client.BaseURL, userID, pagination.TotalPages))
-		if err != nil {
-			return nil, nil, err
-		}
-		pagination.TotalItems = pagination.TotalItems + len(lastFilms)
-		rchan <- lastFilms
-	}
-	// Gather up the middle pages here
-	if pagination.TotalPages > 2 {
-		pagination.TotalItems = pagination.TotalItems + ((pagination.TotalPages - 2) * itemsPerFullPage)
-		for i := 2; i < pagination.TotalPages; i++ {
-			go func(i int) {
-				pfilms, _, err := u.client.Film.ExtractEnhancedFilmsWithPath(ctx, fmt.Sprintf("%s/%s/films/page/%v/", u.client.BaseURL, userID, i))
-				if err != nil {
-					log.WithFields(log.Fields{
-						"page": i,
-						"user": userID,
-					}).Warn("Failed to extract films")
-					return
-				}
-				rchan <- pfilms
-			}(i)
-		}
-	}
-	return rchan, pagination, nil
 }
 
 func (u *UserServiceOp) Watched(ctx context.Context, userID string) ([]*Film, *Response, error) {

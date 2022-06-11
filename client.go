@@ -94,8 +94,6 @@ func (c *Client) sendRequest(req *http.Request, extractor func(io.Reader) (inter
 		log.WithError(err).Warn("Error sending request")
 		return nil, nil, err
 	}
-	// b, _ := ioutil.ReadAll(res.Body)
-
 	defer res.Body.Close()
 
 	if res.StatusCode < http.StatusOK || res.StatusCode >= http.StatusBadRequest {

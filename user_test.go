@@ -81,7 +81,7 @@ func TestListWatched(t *testing.T) {
 func TestStreamWatchedWithChan(t *testing.T) {
 	watchedC := make(chan *Film, 0)
 	done := make(chan error)
-	go sc.User.StreamWatchedWithChan(nil, "someguy", watchedC, done)
+	go sc.User.StreamWatched(nil, "someguy", watchedC, done)
 	watched, err := slurpFilms(watchedC, done)
 	require.NoError(t, err)
 	require.NotEmpty(t, watched)
