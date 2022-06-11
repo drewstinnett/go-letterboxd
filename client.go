@@ -133,13 +133,6 @@ func (c *Client) sendRequest(req *http.Request, extractor func(io.Reader) (inter
 		log.Warn("Error parsing response")
 		return nil, nil, err
 	}
-	/*
-		pagination, err := ExtractPaginationWithReader(bytes.NewReader(b))
-		if err != nil {
-			log.Warn("Error parsing pagination")
-			return nil, nil, err
-		}
-	*/
 	r := &Response{res}
 	d := &PageData{
 		Data: items,

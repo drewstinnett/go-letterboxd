@@ -99,7 +99,7 @@ func (f *FilmServiceOp) StreamBatch(ctx context.Context, batchOpts *FilmBatchOpt
 						log.WithError(err).Error("Failed to get watched films")
 						done <- err
 					} else {
-						log.Info("Finished")
+						log.Debug("Finished getting watch films")
 						loop = false
 					}
 				}
@@ -129,7 +129,7 @@ func (f *FilmServiceOp) StreamBatch(ctx context.Context, batchOpts *FilmBatchOpt
 						log.WithError(err).Error("Failed to get list films")
 						done <- err
 					} else {
-						log.Info("Finished")
+						log.Debug("Finished streaming list films")
 						loop = false
 					}
 				}
@@ -158,7 +158,7 @@ func (f *FilmServiceOp) StreamBatch(ctx context.Context, batchOpts *FilmBatchOpt
 						log.WithError(err).Error("Failed to get watchlist films")
 						done <- err
 					} else {
-						log.Info("Finished")
+						log.Debug("Finished streaming watchlist films")
 						loop = false
 					}
 				}
@@ -301,13 +301,13 @@ func extractFilmFromFilmPage(r io.Reader) (interface{}, *Pagination, error) {
 	doc.Find("meta").Each(func(i int, s *goquery.Selection) {
 		if val, ok := s.Attr("property"); ok && val == "og:title" {
 			fullTitle := s.AttrOr("content", "")
-			f.Title = fullTitle[0 : len(fullTitle)-7]
 			f.Year, err = extractYearFromTitle(fullTitle)
 			if err != nil {
 				log.WithError(err).WithFields(log.Fields{
-					"title":     f.Title,
 					"fullTitle": fullTitle,
 				}).Warn("Error detecting year")
+			} else {
+				f.Title = fullTitle[0 : len(fullTitle)-7]
 			}
 		}
 	})
