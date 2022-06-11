@@ -149,7 +149,7 @@ func (f *FilmServiceOp) StreamBatch(ctx context.Context, batchOpts *FilmBatchOpt
 			}).Info("Fetching watchlist films")
 			listFilmC := make(chan *Film)
 			listDone := make(chan error)
-			go f.client.User.StreamWatchListWithChan(ctx, user, listFilmC, listDone)
+			go f.client.User.StreamWatchList(ctx, user, listFilmC, listDone)
 			loop := true
 			for loop {
 				select {

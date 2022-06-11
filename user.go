@@ -19,7 +19,7 @@ type UserService interface {
 	Profile(context.Context, string) (*User, *Response, error)
 	StreamListWithChan(context.Context, string, string, chan *Film, chan error)
 	StreamWatched(context.Context, string, chan *Film, chan error)
-	StreamWatchListWithChan(context.Context, string, chan *Film, chan error)
+	StreamWatchList(context.Context, string, chan *Film, chan error)
 	Watched(context.Context, string) ([]*Film, *Response, error)
 	WatchList(context.Context, string) ([]*Film, *Response, error)
 }
@@ -300,7 +300,7 @@ func (u *UserServiceOp) StreamListWithChan(
 	}
 }
 
-func (u *UserServiceOp) StreamWatchListWithChan(
+func (u *UserServiceOp) StreamWatchList(
 	ctx context.Context,
 	username string,
 	rchan chan *Film,
@@ -309,7 +309,7 @@ func (u *UserServiceOp) StreamWatchListWithChan(
 	var err error
 	var pagination *Pagination
 	defer func() {
-		log.Debug("Closing StreamWatchListWithChan")
+		log.Debug("Closing StreamWatchList")
 		done <- nil
 	}()
 	firstFilms, pagination, err := u.client.Film.ExtractEnhancedFilmsWithPath(ctx, fmt.Sprintf("%s/%s/watchlist/page/1", u.client.BaseURL, username))
