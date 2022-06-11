@@ -92,7 +92,7 @@ func TestStreamListWithChan(t *testing.T) {
 	watchedC := make(chan *Film, 0)
 	var watched []*Film
 	done := make(chan error)
-	go sc.User.StreamListWithChan(nil, "dave", "official-top-250-narrative-feature-films", watchedC, done)
+	go sc.User.StreamList(nil, "dave", "official-top-250-narrative-feature-films", watchedC, done)
 	watched, err := slurpFilms(watchedC, done)
 	require.NoError(t, err)
 

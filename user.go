@@ -17,7 +17,7 @@ import (
 type UserService interface {
 	Exists(context.Context, string) (bool, error)
 	Profile(context.Context, string) (*User, *Response, error)
-	StreamListWithChan(context.Context, string, string, chan *Film, chan error)
+	StreamList(context.Context, string, string, chan *Film, chan error)
 	StreamWatched(context.Context, string, chan *Film, chan error)
 	StreamWatchList(context.Context, string, chan *Film, chan error)
 	Watched(context.Context, string) ([]*Film, *Response, error)
@@ -237,7 +237,7 @@ func ExtractUserFilms(r io.Reader) (interface{}, *Pagination, error) {
 	return previews, pagination, nil
 }
 
-func (u *UserServiceOp) StreamListWithChan(
+func (u *UserServiceOp) StreamList(
 	ctx context.Context,
 	username string,
 	slug string,
@@ -247,7 +247,7 @@ func (u *UserServiceOp) StreamListWithChan(
 	var err error
 	var pagination *Pagination
 	defer func() {
-		log.Debug("Closing StreamListWithChan")
+		log.Debug("Closing StreamList")
 		done <- nil
 	}()
 	firstFilms, pagination, err := u.client.Film.ExtractEnhancedFilmsWithPath(ctx, fmt.Sprintf("%s/%s/list/%s/page/1", u.client.BaseURL, username, slug))

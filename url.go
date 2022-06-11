@@ -70,7 +70,7 @@ func (u *URLServiceOp) Items(ctx context.Context, lurl string) (interface{}, err
 		}).Info("Detected user list")
 		filmC := make(chan *Film)
 		errorC := make(chan error)
-		go u.client.User.StreamListWithChan(nil, user, list, filmC, errorC)
+		go u.client.User.StreamList(nil, user, list, filmC, errorC)
 		items, err := slurpFilms(filmC, errorC)
 		if err != nil {
 			return nil, err
