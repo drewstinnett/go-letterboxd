@@ -22,12 +22,20 @@ type Client struct {
 	UserAgent string
 	// Config    ClientConfig
 	BaseURL string
-	User    UserService
-	Film    FilmService
+	// Options
+	MaxConcurrentPages int
+
+	User UserService
+	Film FilmService
 	// List    ListService
 	URL URLService
 	// Location  LocationService
 	// Volume    VolumeService
+}
+type ClientConfig struct {
+	HTTPClient         *http.Client
+	BaseURL            string
+	MaxConcurrentPages int
 }
 
 type Response struct {
@@ -35,21 +43,32 @@ type Response struct {
 }
 
 // NewClient Generic new client creation
-func NewClient(httpClient *http.Client) *Client {
-	if httpClient == nil {
-		httpClient = http.DefaultClient
-		// allows 60 requests every 10 seconds
-		// httpClient.Transport = NewThrottledTransport(1*time.Second, 60, http.DefaultTransport)
+func NewClient(config *ClientConfig) *Client {
+	if config == nil {
 		tr := &http.Transport{
 			MaxIdleConns:       10,
 			IdleConnTimeout:    30 * time.Second,
 			DisableCompression: true,
 		}
-		httpClient.Transport = tr
+		config = &ClientConfig{
+			HTTPClient: &http.Client{
+				Timeout:   time.Second * 10,
+				Transport: tr,
+			},
+			BaseURL:            baseURL,
+			MaxConcurrentPages: maxPages,
+		}
+	}
+	if config.HTTPClient == nil {
+		config.HTTPClient = http.DefaultClient
 	}
 
 	userAgent := "letterrestd"
-	c := &Client{client: httpClient, UserAgent: userAgent, BaseURL: baseURL}
+	c := &Client{
+		client:    config.HTTPClient,
+		UserAgent: userAgent,
+		BaseURL:   baseURL,
+	}
 
 	// c.Location = &LocationServiceOp{client: c}
 	// c.Volume = &VolumeServiceOp{client: c}

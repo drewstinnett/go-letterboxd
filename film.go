@@ -305,7 +305,7 @@ func extractFilmFromFilmPage(r io.Reader) (interface{}, *Pagination, error) {
 			if err != nil {
 				log.WithError(err).WithFields(log.Fields{
 					"fullTitle": fullTitle,
-				}).Warn("Error detecting year")
+				}).Debug("Error detecting year")
 			} else {
 				f.Title = fullTitle[0 : len(fullTitle)-7]
 			}
