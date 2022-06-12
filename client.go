@@ -10,6 +10,8 @@ import (
 	"time"
 
 	"github.com/apex/log"
+	"github.com/go-redis/cache/v8"
+	"github.com/go-redis/redis/v8"
 )
 
 const (
@@ -24,6 +26,7 @@ type Client struct {
 	BaseURL string
 	// Options
 	MaxConcurrentPages int
+	Cache              *cache.Cache
 
 	User UserService
 	Film FilmService
@@ -36,6 +39,8 @@ type ClientConfig struct {
 	HTTPClient         *http.Client
 	BaseURL            string
 	MaxConcurrentPages int
+	UseCache           bool // Use the cache
+	Cache              *cache.Cache
 }
 
 type Response struct {
@@ -68,6 +73,24 @@ func NewClient(config *ClientConfig) *Client {
 		client:    config.HTTPClient,
 		UserAgent: userAgent,
 		BaseURL:   baseURL,
+	}
+
+	if config.UseCache {
+		if config.Cache != nil {
+			c.Cache = config.Cache
+		} else {
+			ring := redis.NewRing(&redis.RingOptions{
+				Addrs: map[string]string{
+					"localhost": ":6379",
+				},
+			})
+
+			c.Cache = cache.New(&cache.Options{
+				Redis:      ring,
+				LocalCache: cache.NewTinyLFU(1000, time.Minute),
+			})
+
+		}
 	}
 
 	// c.Location = &LocationServiceOp{client: c}

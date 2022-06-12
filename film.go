@@ -9,9 +9,11 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/PuerkitoBio/goquery"
 	"github.com/apex/log"
+	"github.com/go-redis/cache/v8"
 )
 
 type ExternalFilmIDs struct {
@@ -199,16 +201,40 @@ func (f *FilmServiceOp) ExtractEnhancedFilmsWithPath(ctx context.Context, path s
 }
 
 func (f *FilmServiceOp) Get(ctx context.Context, slug string) (*Film, error) {
-	req, err := http.NewRequest("GET", fmt.Sprintf("%s/film/%s", f.client.BaseURL, slug), nil)
-	if err != nil {
-		return nil, err
+	// Determine if we need to get the cached version or not
+	key := fmt.Sprintf("/letterboxd/film/%s", slug)
+	var retFilm *Film
+	var inCache bool
+	if f.client.Cache != nil {
+		if err := f.client.Cache.Get(ctx, key, &retFilm); err == nil {
+			inCache = true
+		}
 	}
-	item, resp, err := f.client.sendRequest(req, extractFilmFromFilmPage)
-	if err != nil {
-		return nil, err
+
+	if !inCache {
+		req, err := http.NewRequest("GET", fmt.Sprintf("%s/film/%s", f.client.BaseURL, slug), nil)
+		if err != nil {
+			return nil, err
+		}
+		item, resp, err := f.client.sendRequest(req, extractFilmFromFilmPage)
+		if err != nil {
+			return nil, err
+		}
+		defer resp.Body.Close()
+		retFilm = item.Data.(*Film)
+
+		if f.client.Cache != nil {
+			if err := f.client.Cache.Set(&cache.Item{
+				Ctx:   ctx,
+				Key:   key,
+				Value: retFilm,
+				TTL:   time.Hour,
+			}); err != nil {
+				log.WithError(err).Warn("Error Writing Cache")
+			}
+		}
 	}
-	defer resp.Body.Close()
-	return item.Data.(*Film), nil
+	return retFilm, nil
 }
 
 func (f *FilmServiceOp) Filmography(ctx context.Context, opt *FilmographyOpt) ([]*Film, error) {
