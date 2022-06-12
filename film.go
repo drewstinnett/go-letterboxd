@@ -228,7 +228,7 @@ func (f *FilmServiceOp) Get(ctx context.Context, slug string) (*Film, error) {
 				Ctx:   ctx,
 				Key:   key,
 				Value: retFilm,
-				TTL:   time.Hour,
+				TTL:   time.Hour * 24 * 7,
 			}); err != nil {
 				log.WithError(err).Warn("Error Writing Cache")
 			}
