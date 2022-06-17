@@ -71,7 +71,7 @@ func (u *URLServiceOp) Items(ctx context.Context, lurl string) (interface{}, err
 		filmC := make(chan *Film)
 		errorC := make(chan error)
 		go u.client.User.StreamList(nil, user, list, filmC, errorC)
-		items, err := slurpFilms(filmC, errorC)
+		items, err := SlurpFilms(filmC, errorC)
 		if err != nil {
 			return nil, err
 		}

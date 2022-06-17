@@ -113,7 +113,7 @@ func TestStreamBatchWithChan(t *testing.T) {
 		},
 		WatchList: []string{"someguy"},
 	}, watchedC, errorC)
-	watched, err := slurpFilms(watchedC, errorC)
+	watched, err := SlurpFilms(watchedC, errorC)
 	require.NoError(t, err)
 
 	require.NotEmpty(t, watched)

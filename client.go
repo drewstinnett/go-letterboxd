@@ -76,6 +76,7 @@ func NewClient(config *ClientConfig) *Client {
 	}
 
 	if config.UseCache {
+		log.Info("Configuring local cache inside client")
 		if config.Cache != nil {
 			c.Cache = config.Cache
 		} else {

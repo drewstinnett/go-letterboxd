@@ -78,97 +78,94 @@ func (f *FilmServiceOp) StreamBatch(ctx context.Context, batchOpts *FilmBatchOpt
 		log.Debug("Completed Stream Batch")
 		done <- nil
 	}()
-	var wg sync.WaitGroup
+	// var wg sync.WaitGroup
 
 	// Handle User watched films first
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		for _, username := range batchOpts.Watched {
-			// userFilms := []Film{}
-			log.WithFields(log.Fields{
-				"username": username,
-			}).Info("Fetching watched films")
-			userFilmC := make(chan *Film)
-			userDone := make(chan error)
-			go f.client.User.StreamWatched(ctx, username, userFilmC, userDone)
-			for loop := true; loop; {
-				select {
-				case film := <-userFilmC:
-					filmsC <- film
-				case err := <-userDone:
-					if err != nil {
-						log.WithError(err).Error("Failed to get watched films")
-						done <- err
-					} else {
-						log.Debug("Finished getting watch films")
-						loop = false
-					}
+	// wg.Add(1)
+	// go func() {
+	// defer wg.Done()
+	for _, username := range batchOpts.Watched {
+		// userFilms := []Film{}
+		log.WithFields(log.Fields{
+			"username": username,
+		}).Info("Fetching watched films")
+		userFilmC := make(chan *Film)
+		userDone := make(chan error)
+		go f.client.User.StreamWatched(ctx, username, userFilmC, userDone)
+		for loop := true; loop; {
+			select {
+			case film := <-userFilmC:
+				filmsC <- film
+			case err := <-userDone:
+				if err != nil {
+					log.WithError(err).Error("Failed to get watched films")
+					done <- err
+				} else {
+					log.Debug("Finished getting watch films")
+					loop = false
 				}
 			}
 		}
-	}()
+	}
 	// Next up handle Lists
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		for _, listID := range batchOpts.List {
-			// userFilms := []Film{}
-			log.WithFields(log.Fields{
-				"username": listID.User,
-				"slug":     listID.Slug,
-			}).Info("Fetching list films")
-			listFilmC := make(chan *Film)
-			listDone := make(chan error)
-			go f.client.User.StreamList(ctx, listID.User, listID.Slug, listFilmC, listDone)
-			loop := true
-			for loop {
-				select {
-				case film := <-listFilmC:
-					filmsC <- film
-				case err := <-listDone:
-					if err != nil {
-						log.WithError(err).Error("Failed to get list films")
-						done <- err
-					} else {
-						log.Debug("Finished streaming list films")
-						loop = false
-					}
+	// wg.Add(1)
+	// go func() {
+	// defer wg.Done()
+	for _, listID := range batchOpts.List {
+		// userFilms := []Film{}
+		log.WithFields(log.Fields{
+			"username": listID.User,
+			"slug":     listID.Slug,
+		}).Info("Fetching list films")
+		listFilmC := make(chan *Film)
+		listDone := make(chan error)
+		go f.client.User.StreamList(ctx, listID.User, listID.Slug, listFilmC, listDone)
+		loop := true
+		for loop {
+			select {
+			case film := <-listFilmC:
+				filmsC <- film
+			case err := <-listDone:
+				if err != nil {
+					log.WithError(err).Error("Failed to get list films")
+					done <- err
+				} else {
+					log.Debug("Finished streaming list films")
+					loop = false
 				}
 			}
 		}
-	}()
+	}
 
 	// Finally, handle watch lists
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		for _, user := range batchOpts.WatchList {
-			// userFilms := []Film{}
-			log.WithFields(log.Fields{
-				"username": user,
-			}).Info("Fetching watchlist films")
-			listFilmC := make(chan *Film)
-			listDone := make(chan error)
-			go f.client.User.StreamWatchList(ctx, user, listFilmC, listDone)
-			for loop := true; loop; {
-				select {
-				case film := <-listFilmC:
-					filmsC <- film
-				case err := <-listDone:
-					if err != nil {
-						log.WithError(err).Error("Failed to get watchlist films")
-						done <- err
-					} else {
-						log.Debug("Finished streaming watchlist films")
-						loop = false
-					}
+	// wg.Add(1)
+	// go func() {
+	// defer wg.Done()
+	for _, user := range batchOpts.WatchList {
+		// userFilms := []Film{}
+		log.WithFields(log.Fields{
+			"username": user,
+		}).Info("Fetching watchlist films")
+		listFilmC := make(chan *Film)
+		listDone := make(chan error)
+		go f.client.User.StreamWatchList(ctx, user, listFilmC, listDone)
+		for loop := true; loop; {
+			select {
+			case film := <-listFilmC:
+				filmsC <- film
+			case err := <-listDone:
+				if err != nil {
+					log.WithError(err).Error("Failed to get watchlist films")
+					done <- err
+				} else {
+					log.Debug("Finished streaming watchlist films")
+					loop = false
 				}
 			}
 		}
-	}()
+	}
 
-	wg.Wait()
+	// wg.Wait()
 }
 
 func (f *FilmServiceOp) ExtractFilmsWithPath(ctx context.Context, path string) ([]*Film, *Pagination, error) {
@@ -203,15 +200,27 @@ func (f *FilmServiceOp) ExtractEnhancedFilmsWithPath(ctx context.Context, path s
 func (f *FilmServiceOp) Get(ctx context.Context, slug string) (*Film, error) {
 	// Determine if we need to get the cached version or not
 	key := fmt.Sprintf("/letterboxd/film/%s", slug)
-	var retFilm *Film
+	var retFilm Film
 	var inCache bool
+	if ctx == nil {
+		ctx = context.Background()
+	}
 	if f.client.Cache != nil {
+		log.WithFields(log.Fields{
+			"key":   key,
+			"ctx":   ctx,
+			"cache": f.client.Cache,
+		}).Debug("Using cache for lookup")
 		if err := f.client.Cache.Get(ctx, key, &retFilm); err == nil {
+			log.WithField("key", key).Debug("Found film in cache")
 			inCache = true
+		} else {
+			log.WithError(err).WithField("key", key).Debug("Found NOT film in cache")
 		}
 	}
 
 	if !inCache {
+		log.WithField("key", key).Debug("Film not in cache, fetching from Letterboxd.com")
 		req, err := http.NewRequest("GET", fmt.Sprintf("%s/film/%s", f.client.BaseURL, slug), nil)
 		if err != nil {
 			return nil, err
@@ -221,7 +230,8 @@ func (f *FilmServiceOp) Get(ctx context.Context, slug string) (*Film, error) {
 			return nil, err
 		}
 		defer resp.Body.Close()
-		retFilm = item.Data.(*Film)
+		retFilm = *item.Data.(*Film)
+		log.WithField("key", key).Debug("Film fetched from Letterboxd.com")
 
 		if f.client.Cache != nil {
 			if err := f.client.Cache.Set(&cache.Item{
@@ -234,7 +244,7 @@ func (f *FilmServiceOp) Get(ctx context.Context, slug string) (*Film, error) {
 			}
 		}
 	}
-	return retFilm, nil
+	return &retFilm, nil
 }
 
 func (f *FilmServiceOp) Filmography(ctx context.Context, opt *FilmographyOpt) ([]*Film, error) {
@@ -280,6 +290,10 @@ func (f *FilmServiceOp) EnhanceFilm(ctx context.Context, film *Film) error {
 	}
 	fullFilm, err := f.Get(ctx, film.Slug)
 	if err != nil {
+		log.WithFields(log.Fields{
+			"slug": film.Slug,
+			"film": fullFilm,
+		}).WithError(err).Warn("Failed to get film enhancements")
 		return errors.New("Failed to get film for enhancement")
 	}
 	if film.Year == 0 {
@@ -402,7 +416,7 @@ func GetFilmographyProfessions() []string {
 
 // slurpFilms Helper blocking function to slurp a batch of films from the
 // streaming calls. This negates the whole 'Streaming' thing, so use sparingly
-func slurpFilms(filmC chan *Film, errorC chan error) ([]*Film, error) {
+func SlurpFilms(filmC chan *Film, errorC chan error) ([]*Film, error) {
 	var ret []*Film
 	for loop := true; loop; {
 		select {
