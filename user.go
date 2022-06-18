@@ -126,6 +126,7 @@ func (u *UserServiceOp) StreamWatched(ctx context.Context, userID string, rchan 
 		done <- nil
 	}()
 	log.Debug("About to start streaming fims")
+
 	// Get the first page. This seeds the pagination.
 	firstFilms, pagination, err := u.client.Film.ExtractEnhancedFilmsWithPath(ctx, fmt.Sprintf("%s/%s/films/page/1", u.client.BaseURL, userID))
 	if err != nil {

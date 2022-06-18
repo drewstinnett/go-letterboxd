@@ -169,17 +169,35 @@ func (f *FilmServiceOp) StreamBatch(ctx context.Context, batchOpts *FilmBatchOpt
 }
 
 func (f *FilmServiceOp) ExtractFilmsWithPath(ctx context.Context, path string) ([]*Film, *Pagination, error) {
+	key := fmt.Sprintf("/letterboxd/page/%s", path)
+	var inCache bool
+	var pData *PageData
+
+	if f.client.Cache != nil {
+		log.WithFields(log.Fields{
+			"key":   key,
+			"ctx":   ctx,
+			"cache": f.client.Cache,
+		}).Debug("Using cache for lookup")
+		if err := f.client.Cache.Get(ctx, key, &pData); err == nil {
+			log.WithField("key", key).Debug("Found page in cache")
+			inCache = true
+		} else {
+			log.WithError(err).WithField("key", key).Debug("Page NOT in cache")
+		}
+	}
+
 	req, err := http.NewRequest("GET", fmt.Sprintf("%s", path), nil)
 	if err != nil {
 		return nil, nil, err
 	}
-	firstItems, resp, err := f.client.sendRequest(req, ExtractUserFilms)
+	items, resp, err := f.client.sendRequest(req, ExtractUserFilms)
 	if err != nil {
 		return nil, nil, err
 	}
 	defer resp.Body.Close()
-	films := firstItems.Data.([]*Film)
-	return films, &firstItems.Pagintion, nil
+	films := items.Data.([]*Film)
+	return films, &items.Pagintion, nil
 }
 
 func (f *FilmServiceOp) ExtractEnhancedFilmsWithPath(ctx context.Context, path string) ([]*Film, *Pagination, error) {
