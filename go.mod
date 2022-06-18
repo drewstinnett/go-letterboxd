@@ -7,6 +7,7 @@ require (
 	github.com/apex/log v1.9.0
 	github.com/go-redis/cache/v8 v8.4.3
 	github.com/go-redis/redis/v8 v8.11.3
+	github.com/mitchellh/mapstructure v1.1.2
 	github.com/stretchr/testify v1.7.2
 )
 
