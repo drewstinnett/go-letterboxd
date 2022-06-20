@@ -43,9 +43,6 @@ func TestExtractFilmFromFilmPage(t *testing.T) {
 }
 
 func TestEnhanceFilmList(t *testing.T) {
-	client := NewClient(nil)
-	client.BaseURL = srv.URL
-
 	// Make sure we don't get the external ids on a normal call
 	// require.Nil(t, films[0].ExternalIDs)
 	films := []*Film{
@@ -55,7 +52,7 @@ func TestEnhanceFilmList(t *testing.T) {
 	}
 
 	// Make sure we DO get them after enhancing
-	err := client.Film.EnhanceFilmList(nil, &films)
+	err := sc.Film.EnhanceFilmList(nil, &films)
 	require.NoError(t, err)
 	require.NotNil(t, films[0].ExternalIDs)
 }

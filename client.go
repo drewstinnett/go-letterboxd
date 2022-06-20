@@ -39,7 +39,10 @@ type ClientConfig struct {
 	HTTPClient         *http.Client
 	BaseURL            string
 	MaxConcurrentPages int
-	UseCache           bool // Use the cache
+	DisableCache       bool
+	RedisHost          string
+	RedisPassword      string
+	RedisDB            int
 	Cache              *cache.Cache
 }
 
@@ -75,19 +78,22 @@ func NewClient(config *ClientConfig) *Client {
 		BaseURL:   baseURL,
 	}
 
-	if config.UseCache {
-		log.Info("Configuring local cache inside client")
+	if !config.DisableCache {
+		log.Debug("Configuring local cache inside client")
 		if config.Cache != nil {
 			c.Cache = config.Cache
 		} else {
-			ring := redis.NewRing(&redis.RingOptions{
-				Addrs: map[string]string{
-					"localhost": ":6379",
-				},
+			if config.RedisHost == "" {
+				log.Fatal("Cache is not disabled and no RedisHost or Cache specified")
+			}
+			rdb := redis.NewClient(&redis.Options{
+				Addr:     config.RedisHost,
+				Password: config.RedisPassword,
+				DB:       config.RedisDB,
 			})
 
 			c.Cache = cache.New(&cache.Options{
-				Redis:      ring,
+				Redis:      rdb,
 				LocalCache: cache.NewTinyLFU(1000, time.Minute),
 			})
 
