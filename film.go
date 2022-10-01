@@ -13,9 +13,9 @@ import (
 	"time"
 
 	"github.com/PuerkitoBio/goquery"
-	"github.com/apex/log"
 	"github.com/go-redis/cache/v8"
 	"github.com/mitchellh/mapstructure"
+	"github.com/rs/zerolog/log"
 )
 
 type ExternalFilmIDs struct {
@@ -77,7 +77,7 @@ type FilmBatchOpts struct {
 func (f *FilmServiceOp) StreamBatch(ctx context.Context, batchOpts *FilmBatchOpts, filmsC chan *Film, done chan error) {
 	// var films []*Film
 	defer func() {
-		log.Debug("Completed Stream Batch")
+		log.Debug().Msg("Completed Stream Batch")
 		done <- nil
 	}()
 	// var wg sync.WaitGroup
@@ -88,9 +88,7 @@ func (f *FilmServiceOp) StreamBatch(ctx context.Context, batchOpts *FilmBatchOpt
 	// defer wg.Done()
 	for _, username := range batchOpts.Watched {
 		// userFilms := []Film{}
-		log.WithFields(log.Fields{
-			"username": username,
-		}).Info("Fetching watched films")
+		log.Info().Str("username", username).Msg("Fetching watched films")
 		userFilmC := make(chan *Film)
 		userDone := make(chan error)
 		go f.client.User.StreamWatched(ctx, username, userFilmC, userDone)
@@ -100,10 +98,10 @@ func (f *FilmServiceOp) StreamBatch(ctx context.Context, batchOpts *FilmBatchOpt
 				filmsC <- film
 			case err := <-userDone:
 				if err != nil {
-					log.WithError(err).Error("Failed to get watched films")
+					log.Error().Err(err).Msg("Failed to get watched films")
 					done <- err
 				} else {
-					log.Debug("Finished getting watch films")
+					log.Debug().Msg("Finished getting watch films")
 					loop = false
 				}
 			}
@@ -115,10 +113,10 @@ func (f *FilmServiceOp) StreamBatch(ctx context.Context, batchOpts *FilmBatchOpt
 	// defer wg.Done()
 	for _, listID := range batchOpts.List {
 		// userFilms := []Film{}
-		log.WithFields(log.Fields{
-			"username": listID.User,
-			"slug":     listID.Slug,
-		}).Info("Fetching list films")
+		log.Info().
+			Str("username", listID.User).
+			Str("slug", listID.Slug).
+			Msg("Fetching list films")
 		listFilmC := make(chan *Film)
 		listDone := make(chan error)
 		go f.client.User.StreamList(ctx, listID.User, listID.Slug, listFilmC, listDone)
@@ -129,10 +127,10 @@ func (f *FilmServiceOp) StreamBatch(ctx context.Context, batchOpts *FilmBatchOpt
 				filmsC <- film
 			case err := <-listDone:
 				if err != nil {
-					log.WithError(err).Error("Failed to get list films")
+					log.Error().Err(err).Msg("Failed to get list films")
 					done <- err
 				} else {
-					log.Debug("Finished streaming list films")
+					log.Debug().Msg("Finished streaming list films")
 					loop = false
 				}
 			}
@@ -145,9 +143,7 @@ func (f *FilmServiceOp) StreamBatch(ctx context.Context, batchOpts *FilmBatchOpt
 	// defer wg.Done()
 	for _, user := range batchOpts.WatchList {
 		// userFilms := []Film{}
-		log.WithFields(log.Fields{
-			"username": user,
-		}).Info("Fetching watchlist films")
+		log.Info().Str("username", user).Msg("Fetching watchlist films")
 		listFilmC := make(chan *Film)
 		listDone := make(chan error)
 		go f.client.User.StreamWatchList(ctx, user, listFilmC, listDone)
@@ -157,10 +153,10 @@ func (f *FilmServiceOp) StreamBatch(ctx context.Context, batchOpts *FilmBatchOpt
 				filmsC <- film
 			case err := <-listDone:
 				if err != nil {
-					log.WithError(err).Error("Failed to get watchlist films")
+					log.Error().Err(err).Msg("Failed to get watchlist films")
 					done <- err
 				} else {
-					log.Debug("Finished streaming watchlist films")
+					log.Debug().Msg("Finished streaming watchlist films")
 					loop = false
 				}
 			}
@@ -185,31 +181,31 @@ func (f *FilmServiceOp) ExtractFilmsWithPath(ctx context.Context, path string) (
 	}
 
 	if f.client.Cache != nil {
-		log.WithFields(log.Fields{
-			"key":   key,
-			"ctx":   ctx,
-			"cache": f.client.Cache,
-		}).Debug("Using cache for lookup")
+		log.Debug().
+			Str("key", key).
+			Interface("ctx", ctx).
+			Interface("cache", f.client.Cache).
+			Msg("Using cache for lookup")
 		if err := f.client.Cache.Get(ctx, key, &pData); err == nil {
-			log.WithField("key", key).Debug("Found page in cache")
+			log.Debug().Str("key", key).Msg("Found page in cache")
 			inCache = true
 			fi := pData.Data.([]interface{})
 			for _, i := range fi {
 				var d Film
 				err := mapstructure.Decode(i, &d)
 				if err != nil {
-					log.WithError(err).Warn("Failed to decode film")
+					log.Warn().Err(err).Msg("Failed to decode film")
 					return nil, nil, err
 				}
 				films = append(films, &d)
 			}
 		} else {
-			log.WithError(err).WithField("key", key).Debug("Page NOT in cache")
+			log.Debug().Err(err).Str("key", key).Msg("Page NOT in cache")
 		}
 	}
 
 	if !inCache {
-		log.WithField("key", key).Debug("Page not in cache, fetching from Letterboxd.com")
+		log.Debug().Str("key", key).Msg("Page not in cache, fetching from Letterboxd.com")
 		req, err := http.NewRequest("GET", fmt.Sprintf("%s", path), nil)
 		if err != nil {
 			return nil, nil, err
@@ -220,7 +216,7 @@ func (f *FilmServiceOp) ExtractFilmsWithPath(ctx context.Context, path string) (
 			return nil, nil, err
 		}
 		defer resp.Body.Close()
-		log.WithField("key", key).Debug("Page fetched from Letterboxd.com")
+		log.Debug().Str("key", key).Msg("Page fetched from Letterboxd.com")
 		films = pData.Data.([]*Film)
 		if f.client.Cache != nil {
 			if err := f.client.Cache.Set(&cache.Item{
@@ -229,7 +225,7 @@ func (f *FilmServiceOp) ExtractFilmsWithPath(ctx context.Context, path string) (
 				Value: pData,
 				TTL:   time.Hour * 6,
 			}); err != nil {
-				log.WithError(err).Warn("Error Writing Cache")
+				log.Warn().Err(err).Msg("Error Writing Cache")
 			}
 		}
 	}
@@ -243,7 +239,7 @@ func (f *FilmServiceOp) ExtractEnhancedFilmsWithPath(ctx context.Context, path s
 		return nil, pagination, err
 	}
 
-	log.Debug("Launching EnhanceFilmList")
+	log.Debug().Msg("Launching EnhanceFilmList")
 	err = f.client.Film.EnhanceFilmList(ctx, &films)
 	if err != nil {
 		return nil, nil, err
@@ -261,21 +257,17 @@ func (f *FilmServiceOp) Get(ctx context.Context, slug string) (*Film, error) {
 		ctx = context.Background()
 	}
 	if f.client.Cache != nil {
-		log.WithFields(log.Fields{
-			"key":   key,
-			"ctx":   ctx,
-			"cache": f.client.Cache,
-		}).Debug("Using cache for lookup")
+		log.Debug().Msg("Using cache for lookup")
 		if err := f.client.Cache.Get(ctx, key, &retFilm); err == nil {
-			log.WithField("key", key).Debug("Found film in cache")
+			log.Debug().Str("key", key).Msg("Found film in cache")
 			inCache = true
 		} else {
-			log.WithError(err).WithField("key", key).Debug("Found NOT film in cache")
+			log.Debug().Err(err).Str("key", key).Msg("Found NOT film in cache")
 		}
 	}
 
 	if !inCache {
-		log.WithField("key", key).Debug("Film not in cache, fetching from Letterboxd.com")
+		log.Debug().Str("key", key).Msg("Film not in cache, fetching from Letterboxd.com")
 		req, err := http.NewRequest("GET", fmt.Sprintf("%s/film/%s", f.client.BaseURL, slug), nil)
 		if err != nil {
 			return nil, err
@@ -286,7 +278,7 @@ func (f *FilmServiceOp) Get(ctx context.Context, slug string) (*Film, error) {
 		}
 		defer resp.Body.Close()
 		retFilm = *item.Data.(*Film)
-		log.WithField("key", key).Debug("Film fetched from Letterboxd.com")
+		log.Debug().Str("key", key).Msg("Film fetched from Letterboxd.com")
 
 		if f.client.Cache != nil {
 			if err := f.client.Cache.Set(&cache.Item{
@@ -295,7 +287,7 @@ func (f *FilmServiceOp) Get(ctx context.Context, slug string) (*Film, error) {
 				Value: retFilm,
 				TTL:   time.Hour * 24 * 7,
 			}); err != nil {
-				log.WithError(err).Warn("Error Writing Cache")
+				log.Warn().Err(err).Msg("Error Writing Cache")
 			}
 		}
 	}
@@ -324,14 +316,14 @@ func (f *FilmServiceOp) Filmography(ctx context.Context, opt *FilmographyOpt) ([
 	// This is a bit costly, parallel time?
 	err = f.client.Film.EnhanceFilmList(ctx, &partialFilms)
 	if err != nil {
-		log.WithError(err).Warn("Failed to enhance film list")
+		log.Warn().Err(err).Msg("Failed to enhance film list")
 		return nil, err
 	}
 
 	films = append(films, partialFilms...)
 	err = f.client.Film.EnhanceFilmList(ctx, &films)
 	if err != nil {
-		log.WithError(err).Warn("Failed to enhance film list")
+		log.Warn().Err(err).Msg("Failed to enhance film list")
 		return nil, err
 	}
 
@@ -345,10 +337,9 @@ func (f *FilmServiceOp) EnhanceFilm(ctx context.Context, film *Film) error {
 	}
 	fullFilm, err := f.Get(ctx, film.Slug)
 	if err != nil {
-		log.WithFields(log.Fields{
-			"slug": film.Slug,
-			"film": fullFilm,
-		}).WithError(err).Warn("Failed to get film enhancements")
+		log.Warn().
+			Str("slug", film.Slug).
+			Err(err).Msg("Failed to get film enhancements")
 		return errors.New("Failed to get film for enhancement")
 	}
 	if film.Year == 0 {
@@ -374,9 +365,9 @@ func (f *FilmServiceOp) EnhanceFilmList(ctx context.Context, films *[]*Film) err
 		go func(film *Film) {
 			defer wg.Done()
 			guard <- struct{}{}
-			log.Debugf("Looking up %v", film.Slug)
+			log.Debug().Str("slug", film.Slug).Msg("Looking up film")
 			if err := f.EnhanceFilm(ctx, film); err != nil {
-				log.WithError(err).Warn("Failed to get external IDs")
+				log.Warn().Err(err).Msg("Failed to get external IDs")
 			}
 			<-guard
 		}(film)
@@ -398,9 +389,7 @@ func extractFilmFromFilmPage(r io.Reader) (interface{}, *Pagination, error) {
 			fullTitle := s.AttrOr("content", "")
 			f.Year, err = extractYearFromTitle(fullTitle)
 			if err != nil {
-				log.WithError(err).WithFields(log.Fields{
-					"fullTitle": fullTitle,
-				}).Debug("Error detecting year")
+				log.Debug().Err(err).Str("fullTitle", fullTitle).Msg("Error detecting year")
 			} else {
 				f.Title = fullTitle[0 : len(fullTitle)-7]
 			}
