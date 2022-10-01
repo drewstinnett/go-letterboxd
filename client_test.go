@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/apex/log"
+	"github.com/rs/zerolog/log"
 )
 
 var (
@@ -86,9 +86,9 @@ func setup() {
 			defer f.Close()
 			io.Copy(w, f)
 		} else {
-			log.WithFields(log.Fields{
-				"url": r.URL.String(),
-			}).Warn("unexpected request")
+			log.Warn().
+				Str("url", r.URL.String()).
+				Msg("unexpected request")
 			w.WriteHeader(http.StatusNotFound)
 		}
 		defer r.Body.Close()

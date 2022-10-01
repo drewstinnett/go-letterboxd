@@ -7,7 +7,7 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/apex/log"
+	"github.com/rs/zerolog/log"
 )
 
 type URLService interface {
@@ -28,11 +28,11 @@ func (u *URLServiceOp) Items(ctx context.Context, lurl string) (interface{}, err
 	for _, profession := range professions {
 		if strings.HasPrefix(path, fmt.Sprintf("/%v/", profession)) {
 			actor := strings.Split(path, "/")[2]
-			log.WithFields(log.Fields{
-				"path":       path,
-				"profession": profession,
-				"actor":      actor,
-			}).Debug("Detected filmography")
+			log.Debug().
+				Str("path", path).
+				Str("profession", profession).
+				Str("actor", actor).
+				Msg("Detected filmography")
 			items, err := u.client.Film.Filmography(nil, &FilmographyOpt{
 				Profession: profession,
 				Person:     actor,
@@ -47,12 +47,12 @@ func (u *URLServiceOp) Items(ctx context.Context, lurl string) (interface{}, err
 	// Handle Watchlist
 	if strings.HasSuffix(path, "/watchlist") {
 		user := strings.Split(path, "/")[1]
-		log.WithFields(log.Fields{
-			"path": path,
-			"user": user,
-		}).Debug("Detected watchlist")
+		log.Debug().
+			Str("path", path).
+			Str("user", user).
+			Msg("Detected watchlist")
 		items, _, err := u.client.User.WatchList(context.Background(), user)
-		log.Info("Got items from /watchlist")
+		log.Info().Msg("Got items from /watchlist")
 		if err != nil {
 			return nil, err
 		}
@@ -63,11 +63,11 @@ func (u *URLServiceOp) Items(ctx context.Context, lurl string) (interface{}, err
 	if strings.Contains(path, "/list/") {
 		user := strings.Split(path, "/")[1]
 		list := strings.Split(path, "/")[3]
-		log.WithFields(log.Fields{
-			"path": path,
-			"user": user,
-			"list": list,
-		}).Info("Detected user list")
+		log.Info().
+			Str("path", path).
+			Str("user", user).
+			Str("list", list).
+			Msg("Detected user list")
 		filmC := make(chan *Film)
 		errorC := make(chan error)
 		go u.client.User.StreamList(nil, user, list, filmC, errorC)
@@ -79,10 +79,10 @@ func (u *URLServiceOp) Items(ctx context.Context, lurl string) (interface{}, err
 	}
 	if strings.HasSuffix(path, "/films") {
 		user := strings.Split(path, "/")[1]
-		log.WithFields(log.Fields{
-			"path": path,
-			"user": user,
-		}).Debug("Detected user films")
+		log.Debug().
+			Str("path", path).
+			Str("user", user).
+			Msg("Detected user films")
 		items, _, err := u.client.User.Watched(nil, user)
 		if err != nil {
 			return nil, err
@@ -101,7 +101,7 @@ func normalizeURLPath(ourl string) (string, error) {
 	}
 	u, err := url.Parse(ourl)
 	if err != nil {
-		log.WithError(err).Debug("Error parsing URL")
+		log.Debug().Err(err).Msg("Error parsing URL")
 		return "", err
 	}
 	if !strings.Contains(u.Hostname(), "letterboxd.com") {

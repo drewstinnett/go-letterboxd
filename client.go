@@ -9,9 +9,9 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/apex/log"
 	"github.com/go-redis/cache/v8"
 	"github.com/go-redis/redis/v8"
+	"github.com/rs/zerolog/log"
 )
 
 const (
@@ -76,7 +76,7 @@ func NewClient(config *ClientConfig) *Client {
 	}
 
 	if config.UseCache {
-		log.Info("Configuring local cache inside client")
+		log.Info().Msg("Configuring local cache inside client")
 		if config.Cache != nil {
 			c.Cache = config.Cache
 		} else {
@@ -141,7 +141,7 @@ func (c *Client) sendRequest(req *http.Request, extractor func(io.Reader) (inter
 	res, err := c.client.Do(req)
 	req.Close = true
 	if err != nil {
-		log.WithError(err).Warn("Error sending request")
+		log.Warn().Err(err).Msg("Error sending request")
 		return nil, nil, err
 	}
 	defer res.Body.Close()
@@ -157,10 +157,10 @@ func (c *Client) sendRequest(req *http.Request, extractor func(io.Reader) (inter
 		if res.StatusCode == http.StatusTooManyRequests {
 			return nil, nil, fmt.Errorf("too many requests.  Check rate limit and make sure the userAgent is set right")
 		} else if res.StatusCode == http.StatusNotFound {
-			log.WithFields(log.Fields{
-				"status": res.StatusCode,
-				"url":    req.URL.String(),
-			}).Warn("Not found")
+			log.Warn().
+				Int("status", res.StatusCode).
+				Str("url", req.URL.String()).
+				Msg("Not found")
 			return nil, nil, fmt.Errorf("that entry was not found, are you sure it exists?")
 		} else {
 			return nil, nil, fmt.Errorf("error, status code: %d", res.StatusCode)
@@ -173,7 +173,7 @@ func (c *Client) sendRequest(req *http.Request, extractor func(io.Reader) (inter
 	}
 	items, pagination, err := extractor(bytes.NewReader(b))
 	if err != nil {
-		log.Warn("Error parsing response")
+		log.Warn().Msg("Error parsing response")
 		return nil, nil, err
 	}
 	r := &Response{res}

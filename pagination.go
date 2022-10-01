@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	"github.com/PuerkitoBio/goquery"
-	"github.com/apex/log"
+	"github.com/rs/zerolog/log"
 )
 
 type Pagination struct {
@@ -29,7 +29,7 @@ func ExtractPaginationWithDoc(doc *goquery.Document) (*Pagination, error) {
 				if t != "…" {
 					p.CurrentPage, err = strconv.Atoi(t)
 					if err != nil {
-						log.WithError(err).Debug("Error converting current page to int")
+						log.Debug().Err(err).Msg("Error converting current page to int")
 					}
 					// Set current page to last, it should be overridden later
 					p.TotalPages = p.CurrentPage
@@ -39,7 +39,7 @@ func ExtractPaginationWithDoc(doc *goquery.Document) (*Pagination, error) {
 				if t != "…" {
 					p.TotalPages, err = strconv.Atoi(t)
 					if err != nil {
-						log.WithError(err).Debug("Error converting total page to int")
+						log.Debug().Err(err).Msg("Error converting total page to int")
 					}
 				}
 			}
