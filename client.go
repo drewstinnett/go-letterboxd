@@ -78,13 +78,13 @@ func NewClient(config *ClientConfig) *Client {
 		BaseURL:   baseURL,
 	}
 
-	if config.UseCache {
+	if !config.DisableCache {
 		log.Info().Msg("Configuring local cache inside client")
 		if config.Cache != nil {
 			c.Cache = config.Cache
 		} else {
 			if config.RedisHost == "" {
-				log.Fatal("Cache is not disabled and no RedisHost or Cache specified")
+				log.Fatal().Msg("Cache is not disabled and no RedisHost or Cache specified")
 			}
 			rdb := redis.NewClient(&redis.Options{
 				Addr:     config.RedisHost,
