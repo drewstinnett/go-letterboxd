@@ -458,6 +458,34 @@ func GetFilmographyProfessions() []string {
 	return []string{"actor", "director", "producer", "writer"}
 }
 
+func (f *FilmServiceOp) GetWatchedIMDBIDs(ctx context.Context, username string) ([]string, error) {
+	wfilmC := make(chan *Film)
+	wdoneC := make(chan error)
+
+	go f.client.User.StreamWatched(ctx, username, wfilmC, wdoneC)
+
+	var watchedIDs []string
+	for loop := true; loop; {
+		select {
+		case film := <-wfilmC:
+			if film.ExternalIDs != nil {
+				watchedIDs = append(watchedIDs, film.ExternalIDs.IMDB)
+			} else {
+				log.Debug().Str("title", film.Title).Msg("No external IDs, skipping")
+			}
+		case err := <-wdoneC:
+			if err != nil {
+				log.Error().Err(err).Msg("Failed to get watched films")
+				wdoneC <- err
+			} else {
+				log.Debug().Msg("Finished getting watched films")
+				loop = false
+			}
+		}
+	}
+	return watchedIDs, nil
+}
+
 // slurpFilms Helper blocking function to slurp a batch of films from the
 // streaming calls. This negates the whole 'Streaming' thing, so use sparingly
 func SlurpFilms(filmC chan *Film, errorC chan error) ([]*Film, error) {
