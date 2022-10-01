@@ -37,6 +37,7 @@ type FilmService interface {
 	EnhanceFilmList(context.Context, *[]*Film) error
 	Filmography(context.Context, *FilmographyOpt) ([]*Film, error)
 	Get(context.Context, string) (*Film, error)
+	GetWatchedIMDBIDs(context.Context, string) ([]string, error)
 	ExtractFilmsWithPath(context.Context, string) ([]*Film, *Pagination, error)
 	ExtractEnhancedFilmsWithPath(context.Context, string) ([]*Film, *Pagination, error)
 	StreamBatch(context.Context, *FilmBatchOpts, chan *Film, chan error)
