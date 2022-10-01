@@ -7,8 +7,7 @@ import (
 )
 
 func TestURLFilmographyBadProfession(t *testing.T) {
-	client := NewClient(nil)
-	_, err := client.URL.Items(nil, "/televangelist/nicolas-cage")
+	_, err := sc.URL.Items(nil, "/televangelist/nicolas-cage")
 	require.Error(t, err)
 }
 

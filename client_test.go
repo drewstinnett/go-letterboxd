@@ -93,7 +93,9 @@ func setup() {
 		}
 		defer r.Body.Close()
 	}))
-	sc = NewClient(nil)
+	sc = NewClient(&ClientConfig{
+		DisableCache: true,
+	})
 	sc.BaseURL = srv.URL
 }
 
