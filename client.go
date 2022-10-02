@@ -30,6 +30,7 @@ type Client struct {
 
 	User UserService
 	Film FilmService
+	List ListService
 	// List    ListService
 	URL URLService
 	// Location  LocationService
@@ -106,6 +107,7 @@ func NewClient(config *ClientConfig) *Client {
 	c.Film = &FilmServiceOp{client: c}
 	// c.List = &ListServiceOp{client: c}
 	c.URL = &URLServiceOp{client: c}
+	c.List = &ListServiceOp{client: c}
 	return c
 }
 
