@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/PuerkitoBio/goquery"
 	"github.com/rs/zerolog/log"
@@ -17,17 +18,26 @@ import (
 type UserService interface {
 	Exists(context.Context, string) (bool, error)
 	Profile(context.Context, string) (*User, *Response, error)
+	StreamDiary(context.Context, string, chan *DiaryEntry, chan error)
 	StreamList(context.Context, string, string, chan *Film, chan error)
 	StreamWatched(context.Context, string, chan *Film, chan error)
 	StreamWatchList(context.Context, string, chan *Film, chan error)
 	// Watched(context.Context, string) ([]*Film, *Response, error)
 	WatchList(context.Context, string) ([]*Film, *Response, error)
+	ExtractDiaryEntries(io.Reader) ([]*DiaryEntry, *Pagination, error)
 }
 
 type User struct {
 	Username         string `json:"username"`
 	Bio              string `json:"bio,omitempty"`
 	WatchedFilmCount int    `json:"watched_film_count"`
+}
+
+type DiaryEntry struct {
+	Watched *time.Time
+	Rating  *int
+	Film    *Film
+	Slug    *string
 }
 
 type UserServiceOp struct {
@@ -68,6 +78,9 @@ func ExtractUser(r io.Reader) (interface{}, *Pagination, error) {
 		return nil, nil, fmt.Errorf("Failed to extract user")
 	}
 	return user, nil, nil
+}
+
+func (u *UserServiceOp) StreamDiary(ctx context.Context, username string, dec chan *DiaryEntry, ec chan error) {
 }
 
 func (u *UserServiceOp) Profile(ctx context.Context, userID string) (*User, *Response, error) {
@@ -177,28 +190,6 @@ func (u *UserServiceOp) StreamWatched(ctx context.Context, userID string, rchan 
 		wg.Wait()
 	}
 }
-
-/*
-func (u *UserServiceOp) Watched(ctx context.Context, userID string) ([]*Film, *Response, error) {
-	var previews []*Film
-	// Get the first page. This sets the pagination.
-	partialFirstFilms, pagination, err := u.client.Film.ExtractEnhancedFilmsWithPath(ctx, fmt.Sprintf("%s/%s/films/page/1", u.client.BaseURL, userID))
-	if err != nil {
-		return nil, nil, err
-	}
-	previews = append(previews, partialFirstFilms...)
-	for i := 2; i <= pagination.TotalPages; i++ {
-		partialFilms, _, err := u.client.Film.ExtractEnhancedFilmsWithPath(ctx, fmt.Sprintf("%s/%s/films/page/%v/", u.client.BaseURL, userID, i))
-		if err != nil {
-			log.Warn().Int("page", i).Str("user", userID).Msg("Failed to extract films")
-			return nil, nil, err
-		}
-		previews = append(previews, partialFilms...)
-	}
-
-	return previews, nil, nil
-}
-*/
 
 func ExtractUserFilms(r io.Reader) (interface{}, *Pagination, error) {
 	var previews []*Film
@@ -354,4 +345,60 @@ func (u *UserServiceOp) StreamWatchList(
 		}
 		wg.Wait()
 	}
+}
+
+func (u *UserServiceOp) ExtractDiaryEntries(r io.Reader) ([]*DiaryEntry, *Pagination, error) {
+	entries := []*DiaryEntry{}
+	_ = entries
+	doc, err := goquery.NewDocumentFromReader(r)
+	if err != nil {
+		return nil, nil, err
+	}
+	doc.Find(".diary-entry-edit").Each(func(i int, s *goquery.Selection) {
+		entry := &DiaryEntry{}
+		// Figure out date watched
+		val, ok := s.Find("a").Attr("data-viewing-date")
+		if !ok {
+			log.Warn().Msg("Error finding viewing date")
+		} else {
+			t, err := time.Parse("2006-01-02", val)
+			if err != nil {
+				log.Warn().Err(err).Msg("Error parsing date")
+			} else {
+				entry.Watched = &t
+			}
+		}
+
+		// Figure out the rating
+		val, ok = s.Find("a").Attr("data-rating")
+		if !ok {
+			log.Warn().Msg("Error finding rating")
+		} else {
+			rating, err := strconv.Atoi(val)
+			if err != nil {
+				log.Warn().Msg("Error getting rating")
+			}
+			entry.Rating = &rating
+		}
+
+		// Figure out the title slug
+		val, ok = s.Find("a").Attr("data-film-poster")
+		if !ok {
+			log.Warn().Msg("Error finding movie slug")
+		} else {
+			parts := strings.Split(val, "/")
+			if len(parts) != 5 {
+				log.Warn().Interface("parts", parts).Msg("Hmmm...error converting film poster to slug")
+			} else {
+				entry.Slug = &parts[2]
+			}
+		}
+		entry.Film, err = u.client.Film.Get(context.TODO(), *entry.Slug)
+		if err != nil {
+			log.Warn().Err(err).Msg("Error looking up film")
+		}
+
+		entries = append(entries, entry)
+	})
+	return entries, nil, nil
 }

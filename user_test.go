@@ -1,6 +1,7 @@
 package letterboxd
 
 import (
+	"bytes"
 	"os"
 	"testing"
 
@@ -70,16 +71,6 @@ func TestUserProfileExists(t *testing.T) {
 	}
 }
 
-/*
-func TestListWatched(t *testing.T) {
-	watched, _, err := sc.User.Watched(nil, "someguy")
-	require.NoError(t, err)
-	require.NotNil(t, watched)
-
-	require.Equal(t, 321, len(watched))
-}
-*/
-
 func TestStreamWatchedWithChan(t *testing.T) {
 	watchedC := make(chan *Film, 0)
 	done := make(chan error)
@@ -100,4 +91,18 @@ func TestStreamListWithChan(t *testing.T) {
 
 	require.NotEmpty(t, watched)
 	require.Equal(t, 250, len(watched))
+}
+
+func TestExtractUserDiary(t *testing.T) {
+	data, err := os.ReadFile("testdata/user/diary-paginated/1.html")
+	require.NoError(t, err)
+
+	items, _, err := sc.User.ExtractDiaryEntries(bytes.NewReader(data))
+	require.NoError(t, err)
+	require.Equal(t, len(items), 50)
+	require.Equal(t, 7, *items[0].Rating)
+	require.Equal(t, "cure", *items[0].Slug)
+
+	require.NotNil(t, items[0].Film)
+	require.Equal(t, "Sweet Sweetback's Baadasssss Song", items[0].Film.Title)
 }
