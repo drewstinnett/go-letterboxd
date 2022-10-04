@@ -70,6 +70,7 @@ func TestUserProfileExists(t *testing.T) {
 	}
 }
 
+/*
 func TestListWatched(t *testing.T) {
 	watched, _, err := sc.User.Watched(nil, "someguy")
 	require.NoError(t, err)
@@ -77,6 +78,7 @@ func TestListWatched(t *testing.T) {
 
 	require.Equal(t, 321, len(watched))
 }
+*/
 
 func TestStreamWatchedWithChan(t *testing.T) {
 	watchedC := make(chan *Film, 0)

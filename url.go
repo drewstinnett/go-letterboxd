@@ -83,7 +83,11 @@ func (u *URLServiceOp) Items(ctx context.Context, lurl string) (interface{}, err
 			Str("path", path).
 			Str("user", user).
 			Msg("Detected user films")
-		items, _, err := u.client.User.Watched(nil, user)
+
+		watchedC := make(chan *Film)
+		doneC := make(chan error)
+		go u.client.User.StreamWatched(nil, user, watchedC, doneC)
+		items, err := SlurpFilms(watchedC, doneC)
 		if err != nil {
 			return nil, err
 		}

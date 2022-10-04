@@ -45,7 +45,7 @@ func (l *ListServiceOp) GetOfficial(ctx context.Context) []*ListID {
 		{User: "jack", Slug: "official-top-250-documentary-films"},
 		{User: "jack", Slug: "women-directors-the-official-top-250-narrative"},
 		{User: "jake_ziegler", Slug: "academy-award-winners-for-best-picture"},
-		{User: "lifeasfiction", Slug: "letterboxd-100-animation/"},
+		{User: "lifeasfiction", Slug: "letterboxd-100-animation"},
 		{User: "liveandrew", Slug: "bfi-2012-critics-top-250-films"},
 		{User: "matthew", Slug: "box-office-mojo-all-time-worldwide"},
 		{User: "moseschan", Slug: "afi-100-years-100-movies"},

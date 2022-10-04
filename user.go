@@ -20,7 +20,7 @@ type UserService interface {
 	StreamList(context.Context, string, string, chan *Film, chan error)
 	StreamWatched(context.Context, string, chan *Film, chan error)
 	StreamWatchList(context.Context, string, chan *Film, chan error)
-	Watched(context.Context, string) ([]*Film, *Response, error)
+	// Watched(context.Context, string) ([]*Film, *Response, error)
 	WatchList(context.Context, string) ([]*Film, *Response, error)
 }
 
@@ -178,6 +178,7 @@ func (u *UserServiceOp) StreamWatched(ctx context.Context, userID string, rchan 
 	}
 }
 
+/*
 func (u *UserServiceOp) Watched(ctx context.Context, userID string) ([]*Film, *Response, error) {
 	var previews []*Film
 	// Get the first page. This sets the pagination.
@@ -197,6 +198,7 @@ func (u *UserServiceOp) Watched(ctx context.Context, userID string) ([]*Film, *R
 
 	return previews, nil, nil
 }
+*/
 
 func ExtractUserFilms(r io.Reader) (interface{}, *Pagination, error) {
 	var previews []*Film
