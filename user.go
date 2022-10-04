@@ -24,7 +24,7 @@ type UserService interface {
 	StreamWatchList(context.Context, string, chan *Film, chan error)
 	// Watched(context.Context, string) ([]*Film, *Response, error)
 	WatchList(context.Context, string) ([]*Film, *Response, error)
-	ExtractDiaryEntries(io.Reader) ([]*DiaryEntry, *Pagination, error)
+	ExtractDiaryEntries(io.Reader) (interface{}, *Pagination, error)
 }
 
 type User struct {
@@ -80,7 +80,65 @@ func ExtractUser(r io.Reader) (interface{}, *Pagination, error) {
 	return user, nil, nil
 }
 
-func (u *UserServiceOp) StreamDiary(ctx context.Context, username string, dec chan *DiaryEntry, ec chan error) {
+func (u *UserServiceOp) StreamDiary(ctx context.Context, username string, dec chan *DiaryEntry, done chan error) {
+	var err error
+	var pagination *Pagination
+	defer func() {
+		log.Debug().Msg("Closing StreamWatched")
+		done <- nil
+	}()
+	log.Debug().Msg("About to start streaming fims")
+
+	// Get the first page. This seeds the pagination.
+	firstEntries, pagination, err := u.extractDiaryEntryWithPath(ctx, username, 1)
+	// firstEntries, pagination, err := u.client.User.extractDiaryEntryWithPath(ctx, fmt.Sprintf("%s/%s/films/page/1", u.client.BaseURL, userID))
+	if err != nil {
+		done <- err
+	}
+	for _, i := range firstEntries {
+		dec <- i
+	}
+
+	itemsPerFullPage := len(firstEntries)
+	pagination.TotalItems = itemsPerFullPage
+
+	// If more than 1 page, get the last page too, which will likely be a
+	// partial batch of films
+	if pagination.TotalPages > 1 {
+		var lastEntries []*DiaryEntry
+		lastEntries, _, err = u.extractDiaryEntryWithPath(ctx, username, pagination.TotalPages)
+		if err != nil {
+			done <- err
+		}
+		pagination.TotalItems = pagination.TotalItems + len(lastEntries)
+		for _, film := range lastEntries {
+			dec <- film
+		}
+	}
+	// Gather up the middle pages here
+	if pagination.TotalPages > 2 {
+		pagination.TotalItems = pagination.TotalItems + ((pagination.TotalPages - 2) * itemsPerFullPage)
+		middlePageCount := pagination.TotalPages - 2
+		wg := sync.WaitGroup{}
+		wg.Add(middlePageCount)
+		for i := 2; i < pagination.TotalPages; i++ {
+			go func(i int) {
+				defer wg.Done()
+				pfilms, _, err := u.extractDiaryEntryWithPath(ctx, username, i)
+				if err != nil {
+					log.Warn().
+						Int("page", i).
+						Str("user", username).
+						Msg("Failed to extract diary entries")
+					return
+				}
+				for _, film := range pfilms {
+					dec <- film
+				}
+			}(i)
+		}
+		wg.Wait()
+	}
 }
 
 func (u *UserServiceOp) Profile(ctx context.Context, userID string) (*User, *Response, error) {
@@ -347,10 +405,30 @@ func (u *UserServiceOp) StreamWatchList(
 	}
 }
 
-func (u *UserServiceOp) ExtractDiaryEntries(r io.Reader) ([]*DiaryEntry, *Pagination, error) {
+func (u *UserServiceOp) extractDiaryEntryWithPath(ctx context.Context, username string, page int) ([]*DiaryEntry, *Pagination, error) {
+	var pData *PageData
+	req, err := http.NewRequest("GET", fmt.Sprintf("%s/%v/films/diary/page/%v/", u.client.BaseURL, username, page), nil)
+	if err != nil {
+		return nil, nil, err
+	}
+	var resp *Response
+	pData, resp, err = u.client.sendRequest(req, u.ExtractDiaryEntries)
+	defer resp.Body.Close()
+	if err != nil {
+		return nil, nil, err
+	}
+	entries := pData.Data.([]*DiaryEntry)
+	return entries, &pData.Pagintion, nil
+}
+
+func (u *UserServiceOp) ExtractDiaryEntries(r io.Reader) (interface{}, *Pagination, error) {
 	entries := []*DiaryEntry{}
 	_ = entries
 	doc, err := goquery.NewDocumentFromReader(r)
+	if err != nil {
+		return nil, nil, err
+	}
+	pagination, err := ExtractPaginationWithDoc(doc)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -400,5 +478,23 @@ func (u *UserServiceOp) ExtractDiaryEntries(r io.Reader) ([]*DiaryEntry, *Pagina
 
 		entries = append(entries, entry)
 	})
-	return entries, nil, nil
+	return entries, pagination, nil
+}
+
+func SlurpDiary(itemC chan *DiaryEntry, errorC chan error) ([]*DiaryEntry, error) {
+	var ret []*DiaryEntry
+	for loop := true; loop; {
+		select {
+
+		case film := <-itemC:
+			ret = append(ret, film)
+		case err := <-errorC:
+			if err != nil {
+				return nil, err
+			}
+			loop = false
+		default:
+		}
+	}
+	return ret, nil
 }

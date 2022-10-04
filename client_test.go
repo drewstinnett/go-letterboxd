@@ -9,6 +9,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 )
 
@@ -18,6 +19,8 @@ var (
 )
 
 func setup() {
+	zerolog.SetGlobalLevel(zerolog.InfoLevel)
+	log.Logger = log.With().Caller().Logger().Output(zerolog.ConsoleWriter{Out: os.Stderr})
 	srv = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if strings.Contains(r.URL.Path, "/dave/list/official-top-250-narrative-feature-films/page/") {
 			pageNo := strings.Split(r.URL.Path, "/")[5]
@@ -58,14 +61,18 @@ func setup() {
 		} else if strings.Contains(r.URL.Path, "/someguy/films/page/") {
 			pageNo := strings.Split(r.URL.Path, "/")[4]
 			rp, err := os.Open(fmt.Sprintf("testdata/user/watched-paginated/%v.html", pageNo))
-			if err != nil {
-				panic(err)
-			}
 			defer rp.Close()
+			panicIfErr(err)
 			_, err = io.Copy(w, rp)
-			if err != nil {
-				panic(err)
-			}
+			panicIfErr(err)
+			return
+		} else if strings.Contains(r.URL.Path, "/someguy/films/diary/") {
+			pageNo := strings.Split(r.URL.Path, "/")[5]
+			rp, err := os.Open(fmt.Sprintf("testdata/user/diary-paginated/%v.html", pageNo))
+			defer rp.Close()
+			panicIfErr(err)
+			_, err = io.Copy(w, rp)
+			panicIfErr(err)
 			return
 		} else if strings.Contains(r.URL.Path, "someguy/watchlist/page/") {
 			rp, err := os.Open(fmt.Sprintf("testdata/user/watchlist.html"))
@@ -108,4 +115,11 @@ func TestMain(m *testing.M) {
 	code := m.Run()
 	shutdown()
 	os.Exit(code)
+}
+
+func panicIfErr(err error) {
+	if err != nil {
+		log.Warn().Err(err).Msg("Error doing something in the test suite")
+		panic(err)
+	}
 }
