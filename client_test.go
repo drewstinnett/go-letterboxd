@@ -116,10 +116,3 @@ func TestMain(m *testing.M) {
 	shutdown()
 	os.Exit(code)
 }
-
-func panicIfErr(err error) {
-	if err != nil {
-		log.Warn().Err(err).Msg("Error doing something in the test suite")
-		panic(err)
-	}
-}

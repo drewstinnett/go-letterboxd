@@ -2,6 +2,7 @@ package letterboxd
 
 import (
 	"bytes"
+	"context"
 	"os"
 	"testing"
 
@@ -110,10 +111,16 @@ func TestExtractUserDiary(t *testing.T) {
 
 func TestStreamDiaryWithChan(t *testing.T) {
 	diaryC := make(chan *DiaryEntry, 0)
-	done := make(chan error)
-	go sc.User.StreamDiary(nil, "someguy", diaryC, done)
-	items, err := SlurpDiary(diaryC, done)
+	doneC := make(chan error)
+	go sc.User.StreamDiary(nil, "someguy", diaryC, doneC)
+	items, err := SlurpDiary(diaryC, doneC)
 	require.NoError(t, err)
 	require.NotEmpty(t, items)
+	require.Equal(t, 175, len(items))
+}
+
+func TestGetDiary(t *testing.T) {
+	items, err := sc.User.GetDiary(context.Background(), "someguy")
+	require.NoError(t, err)
 	require.Equal(t, 175, len(items))
 }

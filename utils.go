@@ -3,6 +3,8 @@ package letterboxd
 import (
 	"errors"
 	"strings"
+
+	"github.com/rs/zerolog/log"
 )
 
 // 0 means undefined
@@ -52,4 +54,11 @@ func ParseListArgs(args []string) ([]*ListID, error) {
 		ret = append(ret, lid)
 	}
 	return ret, nil
+}
+
+func panicIfErr(err error) {
+	if err != nil {
+		log.Warn().Err(err).Msg("Error doing something in the test suite")
+		panic(err)
+	}
 }
