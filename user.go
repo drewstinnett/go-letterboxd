@@ -6,9 +6,11 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"sort"
 	"strconv"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/PuerkitoBio/goquery"
 	"github.com/rs/zerolog/log"
@@ -17,17 +19,30 @@ import (
 type UserService interface {
 	Exists(context.Context, string) (bool, error)
 	Profile(context.Context, string) (*User, *Response, error)
+	// Interact with Diary
+	StreamDiary(context.Context, string, chan *DiaryEntry, chan error)
+	GetDiary(context.Context, string) ([]*DiaryEntry, error)
+	MustGetDiary(context.Context, string) []*DiaryEntry
+
 	StreamList(context.Context, string, string, chan *Film, chan error)
 	StreamWatched(context.Context, string, chan *Film, chan error)
 	StreamWatchList(context.Context, string, chan *Film, chan error)
 	// Watched(context.Context, string) ([]*Film, *Response, error)
 	WatchList(context.Context, string) ([]*Film, *Response, error)
+	ExtractDiaryEntries(io.Reader) (interface{}, *Pagination, error)
 }
 
 type User struct {
 	Username         string `json:"username"`
 	Bio              string `json:"bio,omitempty"`
 	WatchedFilmCount int    `json:"watched_film_count"`
+}
+
+type DiaryEntry struct {
+	Watched *time.Time
+	Rating  *int
+	Film    *Film
+	Slug    *string
 }
 
 type UserServiceOp struct {
@@ -68,6 +83,164 @@ func ExtractUser(r io.Reader) (interface{}, *Pagination, error) {
 		return nil, nil, fmt.Errorf("Failed to extract user")
 	}
 	return user, nil, nil
+}
+
+// MustGetDiary See GetDiary, but will panic instead of returning an error
+func (u *UserServiceOp) MustGetDiary(ctx context.Context, username string) []*DiaryEntry {
+	items, err := u.GetDiary(ctx, username)
+	panicIfErr(err)
+	return items
+}
+
+// GetDiary returns all diary entries for a given order, sorted by watched date,
+// with the most recent watches first
+func (u *UserServiceOp) GetDiary(ctx context.Context, username string) ([]*DiaryEntry, error) {
+	items := []*DiaryEntry{}
+	c := make(chan *DiaryEntry)
+	dc := make(chan error)
+	go u.StreamDiary(ctx, username, c, dc)
+	for loop := true; loop; {
+		select {
+		case d := <-c:
+			items = append(items, d)
+		case err := <-dc:
+			if err != nil {
+				log.Error().Err(err).Msg("Failed to get watched films")
+				dc <- err
+			} else {
+				log.Debug().Msg("Finished getting watched films")
+				loop = false
+			}
+		}
+	}
+	// Sort entries
+	sort.Slice(items, func(i, j int) bool {
+		return items[i].Watched.After(*items[j].Watched)
+	})
+	return items, nil
+}
+
+func (u *UserServiceOp) XStreamDiary(ctx context.Context, username string, dec chan *DiaryEntry) {
+	var err error
+	var pagination *Pagination
+	defer func() {
+		log.Debug().Msg("Closing StreamWatched")
+		defer close(dec)
+	}()
+	log.Debug().Msg("About to start streaming fims")
+
+	// Get the first page. This seeds the pagination.
+	firstEntries, pagination, err := u.extractDiaryEntryWithPath(ctx, username, 1)
+	if err != nil {
+		log.Warn().Msg("Error looking up first page")
+		// done <- err
+	}
+	for _, i := range firstEntries {
+		dec <- i
+	}
+
+	itemsPerFullPage := len(firstEntries)
+	pagination.TotalItems = itemsPerFullPage
+
+	// If more than 1 page, get the last page too, which will likely be a
+	// partial batch of films
+	if pagination.TotalPages > 1 {
+		var lastEntries []*DiaryEntry
+		lastEntries, _, err = u.extractDiaryEntryWithPath(ctx, username, pagination.TotalPages)
+		if err != nil {
+			log.Warn().Msg("Error looking up last page")
+			// done <- err
+		}
+		pagination.TotalItems = pagination.TotalItems + len(lastEntries)
+		for _, film := range lastEntries {
+			dec <- film
+		}
+	}
+	// Gather up the middle pages here
+	if pagination.TotalPages > 2 {
+		pagination.TotalItems = pagination.TotalItems + ((pagination.TotalPages - 2) * itemsPerFullPage)
+		middlePageCount := pagination.TotalPages - 2
+		wg := sync.WaitGroup{}
+		wg.Add(middlePageCount)
+		for i := 2; i < pagination.TotalPages; i++ {
+			go func(i int) {
+				defer wg.Done()
+				pfilms, _, err := u.extractDiaryEntryWithPath(ctx, username, i)
+				if err != nil {
+					log.Warn().
+						Int("page", i).
+						Str("user", username).
+						Msg("Failed to extract diary entries")
+					return
+				}
+				for _, film := range pfilms {
+					dec <- film
+				}
+			}(i)
+		}
+		wg.Wait()
+	}
+}
+
+func (u *UserServiceOp) StreamDiary(ctx context.Context, username string, dec chan *DiaryEntry, done chan error) {
+	var err error
+	var pagination *Pagination
+	defer func() {
+		log.Debug().Msg("Closing StreamWatched")
+		done <- nil
+	}()
+	log.Debug().Msg("About to start streaming fims")
+
+	// Get the first page. This seeds the pagination.
+	firstEntries, pagination, err := u.extractDiaryEntryWithPath(ctx, username, 1)
+	// firstEntries, pagination, err := u.client.User.extractDiaryEntryWithPath(ctx, fmt.Sprintf("%s/%s/films/page/1", u.client.BaseURL, userID))
+	if err != nil {
+		done <- err
+	}
+	for _, i := range firstEntries {
+		dec <- i
+	}
+
+	itemsPerFullPage := len(firstEntries)
+	pagination.TotalItems = itemsPerFullPage
+
+	// If more than 1 page, get the last page too, which will likely be a
+	// partial batch of films
+	if pagination.TotalPages > 1 {
+		var lastEntries []*DiaryEntry
+		lastEntries, _, err = u.extractDiaryEntryWithPath(ctx, username, pagination.TotalPages)
+		if err != nil {
+			done <- err
+		}
+		pagination.TotalItems = pagination.TotalItems + len(lastEntries)
+		for _, film := range lastEntries {
+			dec <- film
+		}
+	}
+	// Gather up the middle pages here
+	if pagination.TotalPages > 2 {
+		pagination.TotalItems = pagination.TotalItems + ((pagination.TotalPages - 2) * itemsPerFullPage)
+		middlePageCount := pagination.TotalPages - 2
+		wg := sync.WaitGroup{}
+		wg.Add(middlePageCount)
+		for i := 2; i < pagination.TotalPages; i++ {
+			go func(i int) {
+				defer wg.Done()
+				pfilms, _, err := u.extractDiaryEntryWithPath(ctx, username, i)
+				if err != nil {
+					log.Warn().
+						Int("page", i).
+						Str("user", username).
+						Msg("Failed to extract diary entries")
+					return
+				}
+				for _, film := range pfilms {
+					dec <- film
+				}
+			}(i)
+		}
+		wg.Wait()
+	}
 }
 
 func (u *UserServiceOp) Profile(ctx context.Context, userID string) (*User, *Response, error) {
@@ -177,28 +350,6 @@ func (u *UserServiceOp) StreamWatched(ctx context.Context, userID string, rchan 
 		wg.Wait()
 	}
 }
-
-/*
-func (u *UserServiceOp) Watched(ctx context.Context, userID string) ([]*Film, *Response, error) {
-	var previews []*Film
-	// Get the first page. This sets the pagination.
-	partialFirstFilms, pagination, err := u.client.Film.ExtractEnhancedFilmsWithPath(ctx, fmt.Sprintf("%s/%s/films/page/1", u.client.BaseURL, userID))
-	if err != nil {
-		return nil, nil, err
-	}
-	previews = append(previews, partialFirstFilms...)
-	for i := 2; i <= pagination.TotalPages; i++ {
-		partialFilms, _, err := u.client.Film.ExtractEnhancedFilmsWithPath(ctx, fmt.Sprintf("%s/%s/films/page/%v/", u.client.BaseURL, userID, i))
-		if err != nil {
-			log.Warn().Int("page", i).Str("user", userID).Msg("Failed to extract films")
-			return nil, nil, err
-		}
-		previews = append(previews, partialFilms...)
-	}
-
-	return previews, nil, nil
-}
-*/
 
 func ExtractUserFilms(r io.Reader) (interface{}, *Pagination, error) {
 	var previews []*Film
@@ -354,4 +505,97 @@ func (u *UserServiceOp) StreamWatchList(
 		}
 		wg.Wait()
 	}
+}
+
+func (u *UserServiceOp) extractDiaryEntryWithPath(ctx context.Context, username string, page int) ([]*DiaryEntry, *Pagination, error) {
+	var pData *PageData
+	req, err := http.NewRequest("GET", fmt.Sprintf("%s/%v/films/diary/page/%v/", u.client.BaseURL, username, page), nil)
+	if err != nil {
+		return nil, nil, err
+	}
+	var resp *Response
+	pData, resp, err = u.client.sendRequest(req, u.ExtractDiaryEntries)
+	defer resp.Body.Close()
+	if err != nil {
+		return nil, nil, err
+	}
+	entries := pData.Data.([]*DiaryEntry)
+	return entries, &pData.Pagintion, nil
+}
+
+func (u *UserServiceOp) ExtractDiaryEntries(r io.Reader) (interface{}, *Pagination, error) {
+	entries := []*DiaryEntry{}
+	_ = entries
+	doc, err := goquery.NewDocumentFromReader(r)
+	if err != nil {
+		return nil, nil, err
+	}
+	pagination, err := ExtractPaginationWithDoc(doc)
+	if err != nil {
+		return nil, nil, err
+	}
+	doc.Find(".diary-entry-edit").Each(func(i int, s *goquery.Selection) {
+		entry := &DiaryEntry{}
+		// Figure out date watched
+		val, ok := s.Find("a").Attr("data-viewing-date")
+		if !ok {
+			log.Warn().Msg("Error finding viewing date")
+		} else {
+			t, err := time.Parse("2006-01-02", val)
+			if err != nil {
+				log.Warn().Err(err).Msg("Error parsing date")
+			} else {
+				entry.Watched = &t
+			}
+		}
+
+		// Figure out the rating
+		val, ok = s.Find("a").Attr("data-rating")
+		if !ok {
+			log.Warn().Msg("Error finding rating")
+		} else {
+			rating, err := strconv.Atoi(val)
+			if err != nil {
+				log.Warn().Msg("Error getting rating")
+			}
+			entry.Rating = &rating
+		}
+
+		// Figure out the title slug
+		val, ok = s.Find("a").Attr("data-film-poster")
+		if !ok {
+			log.Warn().Msg("Error finding movie slug")
+		} else {
+			parts := strings.Split(val, "/")
+			if len(parts) != 5 {
+				log.Warn().Interface("parts", parts).Msg("Hmmm...error converting film poster to slug")
+			} else {
+				entry.Slug = &parts[2]
+			}
+		}
+		entry.Film, err = u.client.Film.Get(context.TODO(), *entry.Slug)
+		if err != nil {
+			log.Warn().Err(err).Msg("Error looking up film")
+		}
+
+		entries = append(entries, entry)
+	})
+	return entries, pagination, nil
+}
+
+func SlurpDiary(itemC chan *DiaryEntry, doneC chan error) ([]*DiaryEntry, error) {
+	var ret []*DiaryEntry
+	for loop := true; loop; {
+		select {
+		case film := <-itemC:
+			ret = append(ret, film)
+		case err := <-doneC:
+			if err != nil {
+				return nil, err
+			}
+			loop = false
+		default:
+		}
+	}
+	return ret, nil
 }
