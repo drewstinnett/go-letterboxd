@@ -41,6 +41,13 @@ type FilmService interface {
 	ExtractFilmsWithPath(context.Context, string) ([]*Film, *Pagination, error)
 	ExtractEnhancedFilmsWithPath(context.Context, string) ([]*Film, *Pagination, error)
 	StreamBatch(context.Context, *FilmBatchOpts, chan *Film, chan error)
+	List(context.Context, *FilmListOpts) ([]*Film, error)
+}
+
+type FilmListOpts struct {
+	SortBy       string
+	ShufflePages bool
+	PageCount    int
 }
 
 type FilmServiceOp struct {
@@ -52,6 +59,35 @@ type FilmographyOpt struct {
 	Profession string // Profession of the person (actor, writer, director)
 	// FirstPage  int    // First page to fetch. Defaults to 1
 	// LastPage   int    // Last page to fetch. Defaults to FirstPage. Use -1 to fetch all pages
+}
+
+func (f *FilmServiceOp) List(ctx context.Context, opts *FilmListOpts) ([]*Film, error) {
+	sortBy := opts.SortBy
+	if sortBy == "" {
+		sortBy = "popular"
+	}
+	pageCount := opts.PageCount
+	if pageCount == 0 {
+		pageCount = 1
+	}
+
+	// Always pull in the first page, so we can get the right pagination and whatnot
+	allFilms, pagination, err := f.ExtractEnhancedFilmsWithPath(ctx, fmt.Sprintf("/films/ajax/%v/size/small/page/1", sortBy))
+	if err != nil {
+		return nil, err
+	}
+
+	if (pageCount > 1) && (pagination.TotalPages > 1) {
+		remainingPages := populateRemainingPages(pageCount, pagination.TotalPages, opts.ShufflePages)
+		for _, p := range remainingPages {
+			films, _, err := f.ExtractEnhancedFilmsWithPath(ctx, fmt.Sprintf("/films/ajax/%v/size/small/page/%v", sortBy, p))
+			if err != nil {
+				return nil, err
+			}
+			allFilms = append(allFilms, films...)
+		}
+	}
+	return allFilms, nil
 }
 
 func (f *FilmographyOpt) Validate() error {
@@ -207,7 +243,13 @@ func (f *FilmServiceOp) ExtractFilmsWithPath(ctx context.Context, path string) (
 
 	if !inCache {
 		log.Debug().Str("key", key).Msg("Page not in cache, fetching from Letterboxd.com")
-		req, err := http.NewRequest("GET", fmt.Sprintf("%s", path), nil)
+		var url string
+		if strings.HasPrefix(path, "http") {
+			url = path
+		} else {
+			url = fmt.Sprintf("%v%v", f.client.BaseURL, path)
+		}
+		req, err := http.NewRequest("GET", url, nil)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -489,8 +531,8 @@ func (f *FilmServiceOp) GetWatchedIMDBIDs(ctx context.Context, username string) 
 
 // slurpFilms Helper blocking function to slurp a batch of films from the
 // streaming calls. This negates the whole 'Streaming' thing, so use sparingly
-func SlurpFilms(filmC chan *Film, errorC chan error) ([]*Film, error) {
-	var ret []*Film
+func SlurpFilms(filmC chan *Film, errorC chan error) (FilmSet, error) {
+	var ret FilmSet
 	for loop := true; loop; {
 		select {
 
@@ -522,4 +564,30 @@ func extractYearFromTitle(title string) (int, error) {
 		return 0, err
 	}
 	return year, nil
+}
+
+func makeRange(min, max int) []int {
+	a := make([]int, max-min+1)
+	for i := range a {
+		a[i] = min + i
+	}
+	return a
+}
+
+type FilmSet []*Film
+
+func (fs *FilmSet) IMDBIDs() []string {
+	ids := make([]string, len(*fs))
+	for idx, item := range *fs {
+		ids[idx] = item.ExternalIDs.IMDB
+	}
+	return ids
+}
+
+func (fs *FilmSet) TMDBIDs() []string {
+	ids := make([]string, len(*fs))
+	for idx, item := range *fs {
+		ids[idx] = item.ExternalIDs.TMDB
+	}
+	return ids
 }

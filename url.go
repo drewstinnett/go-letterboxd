@@ -33,7 +33,7 @@ func (u *URLServiceOp) Items(ctx context.Context, lurl string) (interface{}, err
 				Str("profession", profession).
 				Str("actor", actor).
 				Msg("Detected filmography")
-			items, err := u.client.Film.Filmography(nil, &FilmographyOpt{
+			items, err := u.client.Film.Filmography(ctx, &FilmographyOpt{
 				Profession: profession,
 				Person:     actor,
 			})
@@ -70,7 +70,7 @@ func (u *URLServiceOp) Items(ctx context.Context, lurl string) (interface{}, err
 			Msg("Detected user list")
 		filmC := make(chan *Film)
 		errorC := make(chan error)
-		go u.client.User.StreamList(nil, user, list, filmC, errorC)
+		go u.client.User.StreamList(ctx, user, list, filmC, errorC)
 		items, err := SlurpFilms(filmC, errorC)
 		if err != nil {
 			return nil, err
@@ -86,7 +86,7 @@ func (u *URLServiceOp) Items(ctx context.Context, lurl string) (interface{}, err
 
 		watchedC := make(chan *Film)
 		doneC := make(chan error)
-		go u.client.User.StreamWatched(nil, user, watchedC, doneC)
+		go u.client.User.StreamWatched(ctx, user, watchedC, doneC)
 		items, err := SlurpFilms(watchedC, doneC)
 		if err != nil {
 			return nil, err

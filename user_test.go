@@ -11,8 +11,8 @@ import (
 
 func TestExtractUserFilms(t *testing.T) {
 	f, err := os.Open("testdata/user/films.html")
-	defer f.Close()
 	require.NoError(t, err)
+	defer f.Close()
 
 	items, _, err := ExtractUserFilms(f)
 	films := items.([]*Film)
@@ -23,8 +23,8 @@ func TestExtractUserFilms(t *testing.T) {
 
 func TestExtractUserFilmsSinglePage(t *testing.T) {
 	f, err := os.Open("testdata/user/watched-films-single.html")
-	defer f.Close()
 	require.NoError(t, err)
+	defer f.Close()
 
 	items, _, err := ExtractUserFilms(f)
 	require.NoError(t, err)
@@ -35,8 +35,8 @@ func TestExtractUserFilmsSinglePage(t *testing.T) {
 
 func TestExtractUser(t *testing.T) {
 	f, err := os.Open("testdata/user/user.html")
-	defer f.Close()
 	require.NoError(t, err)
+	defer f.Close()
 	user, _, err := ExtractUser(f)
 	require.NoError(t, err)
 	require.IsType(t, &User{}, user)
@@ -46,7 +46,7 @@ func TestExtractUser(t *testing.T) {
 }
 
 func TestUserProfile(t *testing.T) {
-	item, _, err := sc.User.Profile(nil, "someguy")
+	item, _, err := sc.User.Profile(context.TODO(), "someguy")
 	require.NoError(t, err)
 	require.IsType(t, &User{}, item)
 	require.Equal(t, 1398, item.WatchedFilmCount)
@@ -62,7 +62,7 @@ func TestUserProfileExists(t *testing.T) {
 	}
 	for _, tt := range tests {
 
-		item, _, err := sc.User.Profile(nil, tt.user)
+		item, _, err := sc.User.Profile(context.TODO(), tt.user)
 		if tt.expect {
 			require.NoError(t, err)
 			require.IsType(t, &User{}, item)
@@ -73,9 +73,9 @@ func TestUserProfileExists(t *testing.T) {
 }
 
 func TestStreamWatchedWithChan(t *testing.T) {
-	watchedC := make(chan *Film, 0)
+	watchedC := make(chan *Film)
 	done := make(chan error)
-	go sc.User.StreamWatched(nil, "someguy", watchedC, done)
+	go sc.User.StreamWatched(context.TODO(), "someguy", watchedC, done)
 	watched, err := SlurpFilms(watchedC, done)
 	require.NoError(t, err)
 	require.NotEmpty(t, watched)
@@ -83,10 +83,10 @@ func TestStreamWatchedWithChan(t *testing.T) {
 }
 
 func TestStreamListWithChan(t *testing.T) {
-	watchedC := make(chan *Film, 0)
+	watchedC := make(chan *Film)
 	var watched []*Film
 	done := make(chan error)
-	go sc.User.StreamList(nil, "dave", "official-top-250-narrative-feature-films", watchedC, done)
+	go sc.User.StreamList(context.TODO(), "dave", "official-top-250-narrative-feature-films", watchedC, done)
 	watched, err := SlurpFilms(watchedC, done)
 	require.NoError(t, err)
 
@@ -110,9 +110,9 @@ func TestExtractUserDiary(t *testing.T) {
 }
 
 func TestStreamDiaryWithChan(t *testing.T) {
-	diaryC := make(chan *DiaryEntry, 0)
+	diaryC := make(chan *DiaryEntry)
 	doneC := make(chan error)
-	go sc.User.StreamDiary(nil, "someguy", diaryC, doneC)
+	go sc.User.StreamDiary(context.TODO(), "someguy", diaryC, doneC)
 	items, err := SlurpDiary(diaryC, doneC)
 	require.NoError(t, err)
 	require.NotEmpty(t, items)

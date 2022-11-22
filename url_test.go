@@ -1,18 +1,19 @@
 package letterboxd
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 )
 
 func TestURLFilmographyBadProfession(t *testing.T) {
-	_, err := sc.URL.Items(nil, "/televangelist/nicolas-cage")
+	_, err := sc.URL.Items(context.TODO(), "/televangelist/nicolas-cage")
 	require.Error(t, err)
 }
 
 func TestURLFilmographyActor(t *testing.T) {
-	items, err := sc.URL.Items(nil, "/actor/nicolas-cage")
+	items, err := sc.URL.Items(context.TODO(), "/actor/nicolas-cage")
 	require.NoError(t, err)
 	require.IsType(t, []*Film{}, items)
 	require.Greater(t, len(items.([]*Film)), 0)
