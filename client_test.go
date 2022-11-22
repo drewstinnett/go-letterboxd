@@ -65,21 +65,21 @@ func setup() {
 		} else if strings.Contains(r.URL.Path, "/someguy/films/page/") {
 			pageNo := strings.Split(r.URL.Path, "/")[4]
 			rp, err := os.Open(fmt.Sprintf("testdata/user/watched-paginated/%v.html", pageNo))
-			defer rp.Close()
 			panicIfErr(err)
+			defer rp.Close()
 			_, err = io.Copy(w, rp)
 			panicIfErr(err)
 			return
 		} else if strings.Contains(r.URL.Path, "/someguy/films/diary/") {
 			pageNo := strings.Split(r.URL.Path, "/")[5]
 			rp, err := os.Open(fmt.Sprintf("testdata/user/diary-paginated/%v.html", pageNo))
-			defer rp.Close()
 			panicIfErr(err)
+			defer rp.Close()
 			_, err = io.Copy(w, rp)
 			panicIfErr(err)
 			return
 		} else if strings.Contains(r.URL.Path, "someguy/watchlist/page/") {
-			rp, err := os.Open(fmt.Sprintf("testdata/user/watchlist.html"))
+			rp, err := os.Open("testdata/user/watchlist.html")
 			if err != nil {
 				panic(err)
 			}
@@ -95,7 +95,8 @@ func setup() {
 				panic(err)
 			}
 			defer f.Close()
-			io.Copy(w, f)
+			_, err = io.Copy(w, f)
+			panicIfErr(err)
 		} else {
 			log.Warn().
 				Str("url", r.URL.String()).

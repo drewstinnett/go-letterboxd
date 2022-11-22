@@ -27,8 +27,8 @@ func TestExtractIDFromURL(t *testing.T) {
 
 func TestExtractFilmFromFilmPage(t *testing.T) {
 	f, err := os.Open("testdata/film/sweetback.html")
-	defer f.Close()
 	require.NoError(t, err)
+	defer f.Close()
 	i, pagination, err := extractFilmFromFilmPage(f)
 	film := i.(*Film)
 	require.NoError(t, err)
@@ -53,7 +53,7 @@ func TestEnhanceFilmList(t *testing.T) {
 	}
 
 	// Make sure we DO get them after enhancing
-	err := sc.Film.EnhanceFilmList(nil, &films)
+	err := sc.Film.EnhanceFilmList(context.TODO(), &films)
 	require.NoError(t, err)
 	require.NotNil(t, films[0].ExternalIDs)
 }
@@ -61,7 +61,7 @@ func TestEnhanceFilmList(t *testing.T) {
 func TestFilmography(t *testing.T) {
 	profession := "actor"
 	person := "nicolas-cage"
-	films, err := sc.Film.Filmography(nil, &FilmographyOpt{
+	films, err := sc.Film.Filmography(context.TODO(), &FilmographyOpt{
 		Person:     person,
 		Profession: profession,
 	})
@@ -102,9 +102,9 @@ func TestValidateFilmography(t *testing.T) {
 }
 
 func TestStreamBatchWithChan(t *testing.T) {
-	watchedC := make(chan *Film, 0)
+	watchedC := make(chan *Film)
 	errorC := make(chan error)
-	go sc.Film.StreamBatch(nil, &FilmBatchOpts{
+	go sc.Film.StreamBatch(context.TODO(), &FilmBatchOpts{
 		Watched: []string{"someguy"},
 		List: []*ListID{
 			{"dave", "official-top-250-narrative-feature-films"},
@@ -119,7 +119,7 @@ func TestStreamBatchWithChan(t *testing.T) {
 }
 
 func TestFilmGet(t *testing.T) {
-	film, err := sc.Film.Get(nil, "sweet-sweetbacks-baadasssss-song")
+	film, err := sc.Film.Get(context.TODO(), "sweet-sweetbacks-baadasssss-song")
 	require.NoError(t, err)
 	require.NotNil(t, film)
 	require.Equal(t, "48640", film.ID)
@@ -155,7 +155,7 @@ func TestEnhanceFilm(t *testing.T) {
 	ogFilm := &Film{
 		Slug: "sweet-sweetbacks-baadasssss-song",
 	}
-	err := sc.Film.EnhanceFilm(nil, ogFilm)
+	err := sc.Film.EnhanceFilm(context.TODO(), ogFilm)
 	require.NoError(t, err)
 	require.NotNil(t, ogFilm)
 	require.Equal(t, 1971, ogFilm.Year)

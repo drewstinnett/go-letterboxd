@@ -249,7 +249,7 @@ func (f *FilmServiceOp) ExtractFilmsWithPath(ctx context.Context, path string) (
 		} else {
 			url = fmt.Sprintf("%v%v", f.client.BaseURL, path)
 		}
-		req, err := http.NewRequest("GET", fmt.Sprintf("%s", url), nil)
+		req, err := http.NewRequest("GET", url, nil)
 		if err != nil {
 			return nil, nil, err
 		}

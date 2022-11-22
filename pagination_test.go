@@ -11,8 +11,8 @@ import (
 func TestExtractPagination(t *testing.T) {
 	var pagination *Pagination
 	f, err := os.Open("testdata/user/films.html")
-	defer f.Close()
 	require.NoError(t, err)
+	defer f.Close()
 	doc, err := goquery.NewDocumentFromReader(f)
 	require.NoError(t, err)
 
@@ -91,8 +91,8 @@ func TestExtractPaginationBytes(t *testing.T) {
 func TestExtractPaginationOnFilmsPage(t *testing.T) {
 	var pagination *Pagination
 	f, err := os.Open("testdata/films/popular.html")
-	defer f.Close()
 	require.NoError(t, err)
+	defer f.Close()
 	doc, err := goquery.NewDocumentFromReader(f)
 	require.NoError(t, err)
 
