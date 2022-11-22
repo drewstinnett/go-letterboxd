@@ -1,6 +1,7 @@
 package letterboxd
 
 import (
+	"context"
 	"os"
 	"testing"
 
@@ -162,4 +163,14 @@ func TestEnhanceFilm(t *testing.T) {
 	require.Equal(t, "tt0067810", ogFilm.ExternalIDs.IMDB)
 	require.Equal(t, "5822", ogFilm.ExternalIDs.TMDB)
 	require.Equal(t, "48640", ogFilm.ID)
+}
+
+func TestFilmsList(t *testing.T) {
+	got, err := sc.Film.List(context.Background(), &FilmListOpts{
+		SortBy: "popular",
+	})
+	require.NoError(t, err)
+	require.NotNil(t, got)
+	require.NotEmpty(t, got)
+	require.Equal(t, 72, len(got))
 }

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"io"
+	"regexp"
 	"strconv"
 	"strings"
 
@@ -45,6 +46,56 @@ func ExtractPaginationWithDoc(doc *goquery.Document) (*Pagination, error) {
 			}
 		})
 	})
+
+	// Hmmm, haven't found pagination info yet, check to see if it's one of those weird film list pages
+	if p.CurrentPage == 0 {
+		doc.Find("p.ui-block-heading").Each(func(i int, s *goquery.Selection) {
+			maybe := s.Text()
+			maybe = strings.ReplaceAll(strings.TrimSpace(maybe), ",", "")
+			r := regexp.MustCompile(`There are (\d+)`)
+			matches := r.FindStringSubmatch(maybe)
+			if len(matches) > 1 {
+				count, err := strconv.Atoi(matches[1])
+				if err != nil {
+					log.Warn().Msg("Could not extract film count for pagination")
+					return
+				}
+				p.TotalItems = count
+				p.TotalPages = (count / 72) + 1
+				// Ok, now try to detect the current page based on previous/next
+				doc.Find("div.pagination").Each(func(i int, s *goquery.Selection) {
+					nlink := s.Find("a.next").First()
+					if nlink.Text() == "Next" {
+						href, ok := nlink.Attr("href")
+						if !ok {
+							return
+						}
+						parts := strings.Split(href, "/")
+						next, err := strconv.Atoi(parts[len(parts)-2])
+						if err != nil {
+							log.Warn().Err(err).Msg("Error detecting next page")
+							return
+						}
+						p.CurrentPage = next - 1
+					}
+					plink := s.Find("a.previous").First()
+					if plink.Text() == "Previous" {
+						href, ok := nlink.Attr("href")
+						if !ok {
+							return
+						}
+						parts := strings.Split(href, "/")
+						prev, err := strconv.Atoi(parts[len(parts)-2])
+						if err != nil {
+							log.Warn().Err(err).Msg("Error detecting previous page")
+							return
+						}
+						p.CurrentPage = prev + 1
+					}
+				})
+			}
+		})
+	}
 	if p.CurrentPage == 0 {
 		return nil, errors.New("Could not extract pagination, no current page")
 	}

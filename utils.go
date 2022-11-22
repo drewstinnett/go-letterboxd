@@ -2,7 +2,9 @@ package letterboxd
 
 import (
 	"errors"
+	"math/rand"
 	"strings"
+	"time"
 
 	"github.com/rs/zerolog/log"
 )
@@ -61,4 +63,17 @@ func panicIfErr(err error) {
 		log.Warn().Err(err).Msg("Error doing something in the test suite")
 		panic(err)
 	}
+}
+
+func populateRemainingPages(count, total int, shuffle bool) []int {
+	var remainingPages []int
+	if shuffle {
+		rand.Seed(time.Now().UnixNano())
+		for i := 0; i <= count; i++ {
+			remainingPages = append(remainingPages, rand.Intn(total-2+1)+2)
+		}
+	} else {
+		remainingPages = makeRange(2, count+1)
+	}
+	return remainingPages
 }

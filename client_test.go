@@ -1,6 +1,7 @@
 package letterboxd
 
 import (
+	"bytes"
 	"fmt"
 	"io"
 	"net/http"
@@ -34,11 +35,14 @@ func setup() {
 				panic(err)
 			}
 			return
+		} else if strings.HasPrefix(r.URL.Path, "/films/ajax/popular/size/") {
+			data, err := os.ReadFile("testdata/films/popular.html")
+			panicIfErr(err)
+			_, err = io.Copy(w, bytes.NewReader(data))
+			panicIfErr(err)
 		} else if strings.HasPrefix(r.URL.Path, "/film/") {
 			sweetbackF, err := os.Open("testdata/film/sweetback.html")
-			if err != nil {
-				panic(err)
-			}
+			panicIfErr(err)
 			defer sweetbackF.Close()
 
 			_, err = io.Copy(w, sweetbackF)

@@ -74,3 +74,21 @@ func TestParseListArgs(t *testing.T) {
 		}
 	}
 }
+
+func TestPopulateRemainingPages(t *testing.T) {
+	tests := map[string]struct {
+		count   int
+		total   int
+		shuffle bool
+		want    []int
+	}{
+		"plain": {
+			count: 5, total: 7, shuffle: false, want: []int{2, 3, 4, 5, 6},
+		},
+	}
+
+	for k, tt := range tests {
+		got := populateRemainingPages(tt.count, tt.total, tt.shuffle)
+		require.Equal(t, tt.want, got, k)
+	}
+}
