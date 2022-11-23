@@ -21,8 +21,8 @@ type UserService interface {
 	Profile(context.Context, string) (*User, *Response, error)
 	// Interact with Diary
 	StreamDiary(context.Context, string, chan *DiaryEntry, chan error)
-	Diary(context.Context, string) ([]*DiaryEntry, error)
-	MustDiary(context.Context, string) []*DiaryEntry
+	Diary(context.Context, string) (DiaryEntries, error)
+	MustDiary(context.Context, string) DiaryEntries
 
 	StreamList(context.Context, string, string, chan *Film, chan error)
 	StreamWatched(context.Context, string, chan *Film, chan error)
@@ -78,7 +78,7 @@ func ExtractUser(r io.Reader) (interface{}, *Pagination, error) {
 }
 
 // MustGetDiary See GetDiary, but will panic instead of returning an error
-func (u *UserServiceOp) MustDiary(ctx context.Context, username string) []*DiaryEntry {
+func (u *UserServiceOp) MustDiary(ctx context.Context, username string) DiaryEntries {
 	items, err := u.Diary(ctx, username)
 	panicIfErr(err)
 	return items
@@ -86,15 +86,15 @@ func (u *UserServiceOp) MustDiary(ctx context.Context, username string) []*Diary
 
 // GetDiary returns all diary entries for a given order, sorted by watched date,
 // with the most recent watches first
-func (u *UserServiceOp) Diary(ctx context.Context, username string) ([]*DiaryEntry, error) {
-	items := []*DiaryEntry{}
+func (u *UserServiceOp) Diary(ctx context.Context, username string) (DiaryEntries, error) {
+	items := DiaryEntries{}
 	c := make(chan *DiaryEntry)
 	dc := make(chan error)
 	go u.StreamDiary(ctx, username, c, dc)
 	for loop := true; loop; {
 		select {
 		case d := <-c:
-			items = append(items, d)
+			items = append(items, *d)
 		case err := <-dc:
 			if err != nil {
 				log.Error().Err(err).Msg("Failed to get watched films")
