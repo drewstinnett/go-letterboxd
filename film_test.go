@@ -46,7 +46,7 @@ func TestExtractFilmFromFilmPage(t *testing.T) {
 func TestEnhanceFilmList(t *testing.T) {
 	// Make sure we don't get the external ids on a normal call
 	// require.Nil(t, films[0].ExternalIDs)
-	films := []*Film{
+	films := FilmSet{
 		{
 			Slug: "sweet-sweetbacks-baadasssss-song",
 		},

@@ -34,14 +34,14 @@ type Film struct {
 
 type FilmService interface {
 	EnhanceFilm(context.Context, *Film) error
-	EnhanceFilmList(context.Context, *[]*Film) error
-	Filmography(context.Context, *FilmographyOpt) ([]*Film, error)
+	EnhanceFilmList(context.Context, *FilmSet) error
+	Filmography(context.Context, *FilmographyOpt) (FilmSet, error)
 	Get(context.Context, string) (*Film, error)
 	GetWatchedIMDBIDs(context.Context, string) ([]string, error)
-	ExtractFilmsWithPath(context.Context, string) ([]*Film, *Pagination, error)
-	ExtractEnhancedFilmsWithPath(context.Context, string) ([]*Film, *Pagination, error)
+	ExtractFilmsWithPath(context.Context, string) (FilmSet, *Pagination, error)
+	ExtractEnhancedFilmsWithPath(context.Context, string) (FilmSet, *Pagination, error)
 	StreamBatch(context.Context, *FilmBatchOpts, chan *Film, chan error)
-	List(context.Context, *FilmListOpts) ([]*Film, error)
+	List(context.Context, *FilmListOpts) (FilmSet, error)
 }
 
 type FilmListOpts struct {
@@ -61,7 +61,7 @@ type FilmographyOpt struct {
 	// LastPage   int    // Last page to fetch. Defaults to FirstPage. Use -1 to fetch all pages
 }
 
-func (f *FilmServiceOp) List(ctx context.Context, opts *FilmListOpts) ([]*Film, error) {
+func (f *FilmServiceOp) List(ctx context.Context, opts *FilmListOpts) (FilmSet, error) {
 	sortBy := opts.SortBy
 	if sortBy == "" {
 		sortBy = "popular"
@@ -112,7 +112,6 @@ type FilmBatchOpts struct {
 
 // StreamBatch Get a bunch of different films at once and stream them back to the user
 func (f *FilmServiceOp) StreamBatch(ctx context.Context, batchOpts *FilmBatchOpts, filmsC chan *Film, done chan error) {
-	// var films []*Film
 	defer func() {
 		log.Debug().Msg("Completed Stream Batch")
 		done <- nil
@@ -203,7 +202,7 @@ func (f *FilmServiceOp) StreamBatch(ctx context.Context, batchOpts *FilmBatchOpt
 	// wg.Wait()
 }
 
-func (f *FilmServiceOp) ExtractFilmsWithPath(ctx context.Context, path string) ([]*Film, *Pagination, error) {
+func (f *FilmServiceOp) ExtractFilmsWithPath(ctx context.Context, path string) (FilmSet, *Pagination, error) {
 	u, err := url.Parse(path)
 	if err != nil {
 		return nil, nil, err
@@ -211,7 +210,7 @@ func (f *FilmServiceOp) ExtractFilmsWithPath(ctx context.Context, path string) (
 	key := fmt.Sprintf("/letterboxd/fullpage%s", u.Path)
 	var inCache bool
 	var pData *PageData
-	var films []*Film
+	var films FilmSet
 
 	if ctx == nil {
 		ctx = context.Background()
@@ -260,7 +259,7 @@ func (f *FilmServiceOp) ExtractFilmsWithPath(ctx context.Context, path string) (
 		}
 		defer resp.Body.Close()
 		log.Debug().Str("key", key).Msg("Page fetched from Letterboxd.com")
-		films = pData.Data.([]*Film)
+		films = pData.Data.(FilmSet)
 		if f.client.Cache != nil {
 			if err := f.client.Cache.Set(&cache.Item{
 				Ctx:   ctx,
@@ -276,7 +275,7 @@ func (f *FilmServiceOp) ExtractFilmsWithPath(ctx context.Context, path string) (
 	return films, &pData.Pagintion, nil
 }
 
-func (f *FilmServiceOp) ExtractEnhancedFilmsWithPath(ctx context.Context, path string) ([]*Film, *Pagination, error) {
+func (f *FilmServiceOp) ExtractEnhancedFilmsWithPath(ctx context.Context, path string) (FilmSet, *Pagination, error) {
 	films, pagination, err := f.ExtractFilmsWithPath(ctx, path)
 	if err != nil {
 		return nil, pagination, err
@@ -337,8 +336,8 @@ func (f *FilmServiceOp) Get(ctx context.Context, slug string) (*Film, error) {
 	return &retFilm, nil
 }
 
-func (f *FilmServiceOp) Filmography(ctx context.Context, opt *FilmographyOpt) ([]*Film, error) {
-	var films []*Film
+func (f *FilmServiceOp) Filmography(ctx context.Context, opt *FilmographyOpt) (FilmSet, error) {
+	var films FilmSet
 	err := opt.Validate()
 	if err != nil {
 		return nil, err
@@ -354,7 +353,7 @@ func (f *FilmServiceOp) Filmography(ctx context.Context, opt *FilmographyOpt) ([
 	}
 	defer resp.Body.Close()
 
-	partialFilms := items.Data.([]*Film)
+	partialFilms := items.Data.(FilmSet)
 
 	// This is a bit costly, parallel time?
 	err = f.client.Film.EnhanceFilmList(ctx, &partialFilms)
@@ -400,7 +399,7 @@ func (f *FilmServiceOp) EnhanceFilm(ctx context.Context, film *Film) error {
 	return nil
 }
 
-func (f *FilmServiceOp) EnhanceFilmList(ctx context.Context, films *[]*Film) error {
+func (f *FilmServiceOp) EnhanceFilmList(ctx context.Context, films *FilmSet) error {
 	var wg sync.WaitGroup
 	wg.Add(len(*films))
 	guard := make(chan struct{}, 5)
@@ -474,7 +473,7 @@ func extractIDFromURL(url string) string {
 }
 
 func extractFilmography(r io.Reader) (interface{}, *Pagination, error) {
-	var previews []*Film
+	var previews FilmSet
 	doc, err := goquery.NewDocumentFromReader(r)
 	if err != nil {
 		return nil, nil, err

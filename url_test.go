@@ -15,8 +15,8 @@ func TestURLFilmographyBadProfession(t *testing.T) {
 func TestURLFilmographyActor(t *testing.T) {
 	items, err := sc.URL.Items(context.TODO(), "/actor/nicolas-cage")
 	require.NoError(t, err)
-	require.IsType(t, []*Film{}, items)
-	require.Greater(t, len(items.([]*Film)), 0)
+	require.IsType(t, FilmSet{}, items)
+	require.Greater(t, len(items.(FilmSet)), 0)
 }
 
 func TestNormalizeURLPath(t *testing.T) {
@@ -42,14 +42,3 @@ func TestNormalizeURLPath(t *testing.T) {
 		}
 	}
 }
-
-/*
-func TestURLWatchList(t *testing.T) {
-	log.Warn("Starting watchlist")
-	items, err := sc.URL.Items(context.TODO(), "/someguy/watchlist")
-	log.Warn("GOT watchlist")
-	require.NoError(t, err)
-	require.IsType(t, []*Film{}, items)
-	require.Greater(t, len(items.([]*Film)), 0)
-}
-*/

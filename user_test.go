@@ -15,7 +15,7 @@ func TestExtractUserFilms(t *testing.T) {
 	defer f.Close()
 
 	items, _, err := ExtractUserFilms(f)
-	films := items.([]*Film)
+	films := items.(FilmSet)
 	require.NoError(t, err)
 	require.Greater(t, len(films), 70)
 	require.Equal(t, "Cypress Hill: Insane in the Brain", films[0].Title)
@@ -28,7 +28,7 @@ func TestExtractUserFilmsSinglePage(t *testing.T) {
 
 	items, _, err := ExtractUserFilms(f)
 	require.NoError(t, err)
-	films := items.([]*Film)
+	films := items.(FilmSet)
 	require.Equal(t, len(films), 34)
 	require.Equal(t, "Irresistible", films[0].Title)
 }
@@ -84,7 +84,7 @@ func TestStreamWatchedWithChan(t *testing.T) {
 
 func TestStreamListWithChan(t *testing.T) {
 	watchedC := make(chan *Film)
-	var watched []*Film
+	var watched FilmSet
 	done := make(chan error)
 	go sc.User.StreamList(context.TODO(), "dave", "official-top-250-narrative-feature-films", watchedC, done)
 	watched, err := SlurpFilms(watchedC, done)
@@ -120,7 +120,7 @@ func TestStreamDiaryWithChan(t *testing.T) {
 }
 
 func TestGetDiary(t *testing.T) {
-	items, err := sc.User.GetDiary(context.Background(), "someguy")
+	items, err := sc.User.Diary(context.Background(), "someguy")
 	require.NoError(t, err)
 	require.Equal(t, 175, len(items))
 }

@@ -21,14 +21,13 @@ type UserService interface {
 	Profile(context.Context, string) (*User, *Response, error)
 	// Interact with Diary
 	StreamDiary(context.Context, string, chan *DiaryEntry, chan error)
-	GetDiary(context.Context, string) ([]*DiaryEntry, error)
-	MustGetDiary(context.Context, string) []*DiaryEntry
+	Diary(context.Context, string) ([]*DiaryEntry, error)
+	MustDiary(context.Context, string) []*DiaryEntry
 
 	StreamList(context.Context, string, string, chan *Film, chan error)
 	StreamWatched(context.Context, string, chan *Film, chan error)
 	StreamWatchList(context.Context, string, chan *Film, chan error)
-	// Watched(context.Context, string) ([]*Film, *Response, error)
-	WatchList(context.Context, string) ([]*Film, *Response, error)
+	WatchList(context.Context, string) (FilmSet, *Response, error)
 	ExtractDiaryEntries(io.Reader) (interface{}, *Pagination, error)
 }
 
@@ -86,15 +85,15 @@ func ExtractUser(r io.Reader) (interface{}, *Pagination, error) {
 }
 
 // MustGetDiary See GetDiary, but will panic instead of returning an error
-func (u *UserServiceOp) MustGetDiary(ctx context.Context, username string) []*DiaryEntry {
-	items, err := u.GetDiary(ctx, username)
+func (u *UserServiceOp) MustDiary(ctx context.Context, username string) []*DiaryEntry {
+	items, err := u.Diary(ctx, username)
 	panicIfErr(err)
 	return items
 }
 
 // GetDiary returns all diary entries for a given order, sorted by watched date,
 // with the most recent watches first
-func (u *UserServiceOp) GetDiary(ctx context.Context, username string) ([]*DiaryEntry, error) {
+func (u *UserServiceOp) Diary(ctx context.Context, username string) ([]*DiaryEntry, error) {
 	items := []*DiaryEntry{}
 	c := make(chan *DiaryEntry)
 	dc := make(chan error)
@@ -260,9 +259,9 @@ func (u *UserServiceOp) Exists(ctx context.Context, userID string) (bool, error)
 	return false, nil
 }
 
-func (u *UserServiceOp) WatchList(ctx context.Context, userID string) ([]*Film, *Response, error) {
+func (u *UserServiceOp) WatchList(ctx context.Context, userID string) (FilmSet, *Response, error) {
 	log.Info().Msg("Starting WatchList sub")
-	var previews []*Film
+	var previews FilmSet
 	page := 1
 	// TODO: This can loop forever
 	for {
@@ -271,12 +270,11 @@ func (u *UserServiceOp) WatchList(ctx context.Context, userID string) ([]*Film, 
 		if err != nil {
 			return nil, nil, err
 		}
-		// var previews []FilmPreview
 		items, resp, err := u.client.sendRequest(req, ExtractUserFilms)
 		if err != nil {
 			return nil, resp, err
 		}
-		partialFilms := items.Data.([]*Film)
+		partialFilms := items.Data.(FilmSet)
 		err = u.client.Film.EnhanceFilmList(ctx, &partialFilms)
 		if err != nil {
 			log.Warn().Err(err).Msg("Failed to enhance film list")
@@ -315,7 +313,7 @@ func (u *UserServiceOp) StreamWatched(ctx context.Context, userID string, rchan 
 	// If more than 1 page, get the last page too, which will likely be a
 	// partial batch of films
 	if pagination.TotalPages > 1 {
-		var lastFilms []*Film
+		var lastFilms FilmSet
 		lastFilms, _, err = u.client.Film.ExtractEnhancedFilmsWithPath(ctx, fmt.Sprintf("%s/%s/films/page/%v", u.client.BaseURL, userID, pagination.TotalPages))
 		if err != nil {
 			done <- err
@@ -352,7 +350,7 @@ func (u *UserServiceOp) StreamWatched(ctx context.Context, userID string, rchan 
 }
 
 func ExtractUserFilms(r io.Reader) (interface{}, *Pagination, error) {
-	var previews []*Film
+	var previews FilmSet
 	var pageBuf bytes.Buffer
 	tee := io.TeeReader(r, &pageBuf)
 	doc, err := goquery.NewDocumentFromReader(tee)
@@ -415,7 +413,7 @@ func (u *UserServiceOp) StreamList(
 	// If more than 1 page, get the last page too, which will likely be a
 	// partial batch of films
 	if pagination.TotalPages > 1 {
-		var lastFilms []*Film
+		var lastFilms FilmSet
 		lastFilms, _, err = u.client.Film.ExtractEnhancedFilmsWithPath(ctx, fmt.Sprintf("%s/%s/list/%s/page/%v", u.client.BaseURL, username, slug, pagination.TotalPages))
 		if err != nil {
 			done <- err
@@ -474,7 +472,7 @@ func (u *UserServiceOp) StreamWatchList(
 	// If more than 1 page, get the last page too, which will likely be a
 	// partial batch of films
 	if pagination.TotalPages > 1 {
-		var lastFilms []*Film
+		var lastFilms FilmSet
 		lastFilms, _, err = u.client.Film.ExtractEnhancedFilmsWithPath(ctx, fmt.Sprintf("%s/%s/watchlist/page/%v", u.client.BaseURL, username, pagination.TotalPages))
 		if err != nil {
 			done <- err

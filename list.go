@@ -5,7 +5,6 @@ import (
 )
 
 type ListService interface {
-	// ListFilms(context.Context, *ListFilmsOpt) ([]*Film, error)
 	GetOfficialMap(context.Context) map[string]string
 	GetOfficial(context.Context) []*ListID
 }
