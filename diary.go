@@ -123,6 +123,9 @@ func timeWithCobraString(cmd *cobra.Command, s string) (*time.Time, error) {
 	if err != nil {
 		return nil, err
 	}
+	if earliestS == "" {
+		return nil, nil
+	}
 	formats := []string{
 		"2006-01-02",
 		"2006-01",
