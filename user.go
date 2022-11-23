@@ -37,13 +37,6 @@ type User struct {
 	WatchedFilmCount int    `json:"watched_film_count"`
 }
 
-type DiaryEntry struct {
-	Watched *time.Time
-	Rating  *int
-	Film    *Film
-	Slug    *string
-}
-
 type UserServiceOp struct {
 	client *Client
 }
@@ -544,6 +537,26 @@ func (u *UserServiceOp) ExtractDiaryEntries(r io.Reader) (interface{}, *Paginati
 				log.Warn().Err(err).Msg("Error parsing date")
 			} else {
 				entry.Watched = &t
+			}
+		}
+
+		// Figure out if a date was specified
+		sDateS, ok := s.Find("a").Attr("data-specified-date")
+		if !ok {
+			log.Warn().Msg("Error finding specified date")
+		} else {
+			if sDateS == "true" {
+				entry.SpecifiedDate = true
+			}
+		}
+
+		// Figure out if a date was a rewatch
+		rewatchS, ok := s.Find("a").Attr("data-rewatch")
+		if !ok {
+			log.Warn().Msg("Error finding if this is a rewatch")
+		} else {
+			if rewatchS == "true" {
+				entry.Rewatch = true
 			}
 		}
 
