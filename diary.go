@@ -2,6 +2,7 @@ package letterboxd
 
 import (
 	"errors"
+	"strconv"
 	"time"
 
 	"github.com/spf13/cobra"
@@ -21,6 +22,8 @@ type DiaryEntries []DiaryEntry
 type DiaryFilterOpts struct {
 	Earliest      *time.Time
 	Latest        *time.Time
+	MinRating     *int
+	MaxRating     *int
 	Rewatch       *bool
 	SpecifiedDate *bool
 }
@@ -49,6 +52,24 @@ func DiaryFilterRewatch(e DiaryEntry, f DiaryFilterOpts) bool {
 		return true
 	}
 	return *f.Rewatch == e.Rewatch
+}
+
+func DiaryFilterMinRating(e DiaryEntry, f DiaryFilterOpts) bool {
+	if f.MinRating == nil {
+		return true
+	}
+	r := e.Rating
+	fr := f.MinRating
+	return *r >= *fr
+}
+
+func DiaryFilterMaxRating(e DiaryEntry, f DiaryFilterOpts) bool {
+	if f.MaxRating == nil {
+		return true
+	}
+	r := e.Rating
+	fr := f.MaxRating
+	return *r <= *fr
 }
 
 func DiaryFilterDateSpecified(e DiaryEntry, f DiaryFilterOpts) bool {
@@ -86,35 +107,89 @@ func ApplyDiaryFilters(records DiaryEntries, opts DiaryFilterOpts, filters ...Di
 	return filteredRecords
 }
 
-func BindDiaryFilterWithCobra(cmd *cobra.Command) {
-	cmd.PersistentFlags().String("diary-earliest", "", "Earliest diary entries")
-	cmd.PersistentFlags().String("diary-latest", "", "Latest diary entries")
-	cmd.PersistentFlags().Bool("diary-rewatched", false, "Only return re-watched entries")
-	cmd.PersistentFlags().Bool("diary-date-specified", false, "Only return entries with a date specified")
+type DiaryCobraOpts struct {
+	Prefix string
 }
 
-func DiaryFilterWithCobra(cmd *cobra.Command) (*DiaryFilterOpts, error) {
-	var err error
+func prefixWithDiaryCobraOpts(opts DiaryCobraOpts) string {
+	var prefix string
+	if opts.Prefix != "" {
+		prefix = opts.Prefix + "-"
+	}
+	return prefix
+}
+
+func BindDiaryFilterWithCobra(cmd *cobra.Command, opts DiaryCobraOpts) {
+	prefix := prefixWithDiaryCobraOpts(opts)
+	cmd.PersistentFlags().String(prefix+"earliest", "", "Earliest diary entries")
+	cmd.PersistentFlags().String(prefix+"latest", "", "Latest diary entries")
+	cmd.PersistentFlags().String(prefix+"year", "", "Only use entries from the given year")
+	cmd.PersistentFlags().Int(prefix+"min-rating", 0, "Minimum rating for entries")
+	cmd.PersistentFlags().Int(prefix+"max-rating", 10, "Maximum rating for entries")
+	cmd.PersistentFlags().Bool(prefix+"rewatched", false, "Only return re-watched entries")
+	cmd.PersistentFlags().Bool(prefix+"date-specified", false, "Only return entries with a date specified")
+	cmd.MarkFlagsMutuallyExclusive(prefix+"year", prefix+"earliest")
+	cmd.MarkFlagsMutuallyExclusive(prefix+"year", prefix+"latest")
+}
+
+func DiaryFilterWithCobra(cmd *cobra.Command, dopts DiaryCobraOpts) (*DiaryFilterOpts, error) {
+	prefix := prefixWithDiaryCobraOpts(dopts)
 	opts := &DiaryFilterOpts{}
 
-	opts.Earliest, err = timeWithCobraString(cmd, "diary-earliest")
+	var err error
+	opts.Earliest, err = timeWithCobraString(cmd, prefix+"earliest")
 	if err != nil {
 		return nil, err
 	}
-	opts.Latest, err = timeWithCobraString(cmd, "diary-latest")
+	opts.Latest, err = timeWithCobraString(cmd, prefix+"latest")
 	if err != nil {
 		return nil, err
 	}
-	rewatched, err := cmd.Flags().GetBool("diary-rewatched")
+
+	// Rating
+	mir, err := cmd.Flags().GetInt(prefix + "min-rating")
 	if err != nil {
 		return nil, err
 	}
-	opts.Rewatch = &rewatched
-	dateSpecified, err := cmd.Flags().GetBool("diary-date-specified")
+	opts.MinRating = &mir
+
+	mar, err := cmd.Flags().GetInt(prefix + "max-rating")
 	if err != nil {
 		return nil, err
+	} else if mar > 0 {
+		opts.MaxRating = &mar
 	}
-	opts.SpecifiedDate = &dateSpecified
+
+	yearS, err := cmd.PersistentFlags().GetString(prefix + "year")
+	if err != nil {
+		return nil, err
+	} else if yearS != "" {
+		year, err := strconv.Atoi(yearS)
+		if err != nil {
+			return nil, err
+		}
+
+		e := time.Date(year, time.Month(1), 1, 0, 0, 0, 0, time.UTC)
+		l := time.Date(year+1, time.Month(1), 0, 0, 0, 0, 0, time.UTC)
+		opts.Earliest = &e
+		opts.Latest = &l
+	}
+
+	if cmd.PersistentFlags().Changed(prefix + "rewatched") {
+		rewatched, err := cmd.Flags().GetBool(prefix + "rewatched")
+		if err != nil {
+			return nil, err
+		}
+		opts.Rewatch = &rewatched
+	}
+
+	if cmd.PersistentFlags().Changed(prefix + "date-specified") {
+		dateSpecified, err := cmd.Flags().GetBool(prefix + "date-specified")
+		if err != nil {
+			return nil, err
+		}
+		opts.SpecifiedDate = &dateSpecified
+	}
 	return opts, nil
 }
 
@@ -133,7 +208,7 @@ func timeWithCobraString(cmd *cobra.Command, s string) (*time.Time, error) {
 	}
 	for _, format := range formats {
 		t, err := time.Parse(format, earliestS)
-		if err != nil {
+		if err == nil {
 			return &t, nil
 		}
 	}
