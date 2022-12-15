@@ -32,9 +32,11 @@ type UserService interface {
 }
 
 type User struct {
-	Username         string `json:"username"`
-	Bio              string `json:"bio,omitempty"`
-	WatchedFilmCount int    `json:"watched_film_count"`
+	Username         string   `json:"username"`
+	Bio              string   `json:"bio,omitempty"`
+	WatchedFilmCount int      `json:"watched_film_count"`
+	Following        []string `json:"following"`
+	Followers        []string `json:"followers"`
 }
 
 type UserServiceOp struct {

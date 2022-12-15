@@ -198,3 +198,13 @@ func (c *Client) sendRequest(req *http.Request, extractor func(io.Reader) (inter
 type ErrorResponse struct {
 	Message string `json:"errors"`
 }
+
+// MustNewRequest is a wrapper around http.NewRequest that panics if an error
+// occurs
+func MustNewRequest(method, url string, body io.Reader) *http.Request {
+	req, err := http.NewRequest(method, url, body)
+	if err != nil {
+		panic(err)
+	}
+	return req
+}
