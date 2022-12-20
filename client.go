@@ -1,3 +1,6 @@
+/*
+Package letterboxd is the client for interacting with the http api
+*/
 package letterboxd
 
 import (
@@ -19,6 +22,7 @@ const (
 	maxPages = 50
 )
 
+// Client represents the thing containing services and methods for interacting with Letterboxd
 type Client struct {
 	client    *http.Client
 	UserAgent string
@@ -36,6 +40,8 @@ type Client struct {
 	// Location  LocationService
 	// Volume    VolumeService
 }
+
+// ClientConfig is the configuration strcut for the client
 type ClientConfig struct {
 	HTTPClient         *http.Client
 	BaseURL            string
@@ -47,6 +53,7 @@ type ClientConfig struct {
 	Cache              *cache.Cache
 }
 
+// Response holds the http response and metadata arounda given request
 type Response struct {
 	*http.Response
 	pagination *Pagination
@@ -98,7 +105,6 @@ func NewClient(config *ClientConfig) *Client {
 				Redis:      rdb,
 				LocalCache: cache.NewTinyLFU(1000, time.Minute),
 			})
-
 		}
 	}
 
@@ -112,6 +118,7 @@ func NewClient(config *ClientConfig) *Client {
 	return c
 }
 
+// PageData just provides Pagination info and 'Data'
 type PageData struct {
 	Data      interface{}
 	Pagintion Pagination
@@ -152,7 +159,7 @@ func (c *Client) sendRequest(req *http.Request, extractor func(io.Reader) (inter
 	if err != nil {
 		return nil, nil, err
 	}
-	defer res.Body.Close()
+	defer dclose(res.Body)
 
 	if res.StatusCode < http.StatusOK || res.StatusCode >= http.StatusBadRequest {
 		var errRes ErrorResponse
@@ -162,15 +169,16 @@ func (c *Client) sendRequest(req *http.Request, extractor func(io.Reader) (inter
 			return nil, nil, errors.New(errRes.Message)
 		}
 
-		if res.StatusCode == http.StatusTooManyRequests {
+		switch {
+		case res.StatusCode == http.StatusTooManyRequests:
 			return nil, nil, fmt.Errorf("too many requests.  Check rate limit and make sure the userAgent is set right")
-		} else if res.StatusCode == http.StatusNotFound {
+		case res.StatusCode == http.StatusNotFound:
 			log.Warn().
 				Int("status", res.StatusCode).
 				Str("url", req.URL.String()).
 				Msg("Not found")
 			return nil, nil, fmt.Errorf("that entry was not found, are you sure it exists?")
-		} else {
+		default:
 			return nil, nil, fmt.Errorf("error, status code: %d", res.StatusCode)
 		}
 	}
@@ -204,6 +212,7 @@ func (c *Client) sendRequest(req *http.Request, extractor func(io.Reader) (inter
 	return d, r, nil
 }
 
+// ErrorResponse just contains the errors of a response
 type ErrorResponse struct {
 	Message string `json:"errors"`
 }
@@ -216,4 +225,10 @@ func MustNewRequest(method, url string, body io.Reader) *http.Request {
 		panic(err)
 	}
 	return req
+}
+
+func dclose(c io.Closer) {
+	if err := c.Close(); err != nil {
+		panic(err)
+	}
 }

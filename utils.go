@@ -12,13 +12,15 @@ import (
 // 0 means undefined
 // -1 means go for as far as you can!
 func normalizeStartStop(firstPage, lastPage int) (int, int, error) {
-	if firstPage == 0 && lastPage == 0 {
+	switch {
+	case firstPage == 0 && lastPage == 0:
 		return 1, 1, nil
-	} else if firstPage == 0 {
+	case firstPage == 0:
 		return 1, lastPage, nil
-	} else if lastPage == 0 {
+	case lastPage == 0:
 		return firstPage, firstPage, nil
 	}
+
 	if (lastPage >= 0) && (firstPage > lastPage) {
 		return 0, 0, errors.New("last page must be greater than first page")
 	}
@@ -32,6 +34,7 @@ func normalizeSlug(slug string) string {
 	return slug
 }
 
+// StringInSlice is a tiny helper to determin if a slice of strings contains a specific string
 func StringInSlice(a string, list []string) bool {
 	for _, b := range list {
 		if b == a {
@@ -41,7 +44,7 @@ func StringInSlice(a string, list []string) bool {
 	return false
 }
 
-// Given a slice of strings, return a slice of ListIDs
+// ParseListArgs Given a slice of strings, return a slice of ListIDs
 func ParseListArgs(args []string) ([]*ListID, error) {
 	var ret []*ListID
 	for _, argS := range args {
@@ -70,7 +73,8 @@ func populateRemainingPages(count, total int, shuffle bool) []int {
 	if shuffle {
 		rand.Seed(time.Now().UnixNano())
 		for i := 0; i <= count; i++ {
-			remainingPages = append(remainingPages, rand.Intn(total-2+1)+2)
+			// We don't care so much about the security of this random number
+			remainingPages = append(remainingPages, rand.Intn(total-2+1)+2) // nolint:golint,gosec
 		}
 	} else {
 		remainingPages = makeRange(2, count+1)

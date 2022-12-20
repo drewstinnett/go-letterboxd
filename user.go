@@ -20,6 +20,7 @@ type UserService interface {
 	Exists(context.Context, string) (bool, error)
 	Profile(context.Context, string) (*User, *Response, error)
 	Following(context.Context, string) ([]string, *Response, error)
+	Followers(context.Context, string) ([]string, *Response, error)
 	// Interact with Diary
 	StreamDiary(context.Context, string, chan *DiaryEntry, chan error)
 	Diary(context.Context, string) (DiaryEntries, error)
@@ -272,12 +273,54 @@ func (u *UserServiceOp) Profile(ctx context.Context, userID string) (*User, *Res
 		return nil, resp, err
 	}
 	defer resp.Body.Close()
-	return user.Data.(*User), resp, nil
+
+	userD := user.Data.(*User)
+
+	userD.Following, _, err = u.Following(ctx, userID)
+	if err != nil {
+		log.Warn().Str("user", userID).Msg("Could not get user following")
+	}
+
+	userD.Followers, _, err = u.Followers(ctx, userID)
+
+	if err != nil {
+		log.Warn().Str("user", userID).Msg("Could not get user followers")
+	}
+
+	return userD, resp, nil
 }
 
+/*
 type stringsHasMore struct {
 	Values  []string
 	HasMore bool
+}
+*/
+
+func (u *UserServiceOp) Followers(ctx context.Context, userID string) ([]string, *Response, error) {
+	curP := 1
+	allPeople := []string{}
+
+	// TODO: Do we want a limit thing here?
+	for {
+		req := MustNewRequest("GET", fmt.Sprintf("%s/%s/followers/page/%v", u.client.BaseURL, userID, curP), nil)
+		people, resp, err := u.client.sendRequest(req, ExtractPeople)
+		if err != nil {
+			return nil, resp, err
+		}
+		err = resp.Body.Close()
+		if err != nil {
+			return nil, resp, err
+		}
+		names := people.Data.([]string)
+		allPeople = append(allPeople, names...)
+
+		if resp.pagination.IsLast {
+			break
+		}
+		curP++
+	}
+	return allPeople, nil, nil
 }
 
 func (u *UserServiceOp) Following(ctx context.Context, userID string) ([]string, *Response, error) {

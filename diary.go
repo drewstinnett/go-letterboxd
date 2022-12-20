@@ -8,6 +8,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// DiaryEntry is a specific film from a users Diary
 type DiaryEntry struct {
 	Watched       *time.Time
 	Rating        *int
@@ -17,8 +18,10 @@ type DiaryEntry struct {
 	Slug          *string
 }
 
+// DiaryEntries is multiple DiaryEntry items
 type DiaryEntries []DiaryEntry
 
+// DiaryFilterOpts provides options for filtering a user diary
 type DiaryFilterOpts struct {
 	Earliest      *time.Time
 	Latest        *time.Time
@@ -29,10 +32,13 @@ type DiaryFilterOpts struct {
 }
 
 type (
-	DiaryFilter     func(DiaryEntry, DiaryFilterOpts) bool
+	// DiaryFilter is a generic function to filter diary entries
+	DiaryFilter func(DiaryEntry, DiaryFilterOpts) bool
+	// DiaryFilterBulk is a generic function to filter diary entries in bulk
 	DiaryFilterBulk func(DiaryEntries, DiaryFilterOpts) DiaryEntries
 )
 
+// DiaryFilterEarliest filters based on the earliest date
 func DiaryFilterEarliest(e DiaryEntry, f DiaryFilterOpts) bool {
 	if f.Earliest == nil {
 		return true
@@ -40,6 +46,7 @@ func DiaryFilterEarliest(e DiaryEntry, f DiaryFilterOpts) bool {
 	return e.Watched.After(*f.Earliest)
 }
 
+// DiaryFilterLatest filters based on the latest date
 func DiaryFilterLatest(e DiaryEntry, f DiaryFilterOpts) bool {
 	if f.Latest == nil {
 		return true
@@ -47,6 +54,7 @@ func DiaryFilterLatest(e DiaryEntry, f DiaryFilterOpts) bool {
 	return e.Watched.Before(*f.Latest)
 }
 
+// DiaryFilterRewatch only show entries that are re-watches
 func DiaryFilterRewatch(e DiaryEntry, f DiaryFilterOpts) bool {
 	if f.Rewatch == nil {
 		return true
@@ -54,6 +62,7 @@ func DiaryFilterRewatch(e DiaryEntry, f DiaryFilterOpts) bool {
 	return *f.Rewatch == e.Rewatch
 }
 
+// DiaryFilterMinRating filters based on minimum rating
 func DiaryFilterMinRating(e DiaryEntry, f DiaryFilterOpts) bool {
 	if f.MinRating == nil {
 		return true
@@ -63,6 +72,7 @@ func DiaryFilterMinRating(e DiaryEntry, f DiaryFilterOpts) bool {
 	return *r >= *fr
 }
 
+// DiaryFilterMaxRating filters based on maximum rating
 func DiaryFilterMaxRating(e DiaryEntry, f DiaryFilterOpts) bool {
 	if f.MaxRating == nil {
 		return true
@@ -72,6 +82,7 @@ func DiaryFilterMaxRating(e DiaryEntry, f DiaryFilterOpts) bool {
 	return *r <= *fr
 }
 
+// DiaryFilterDateSpecified only returns items that actually list the date they were watched
 func DiaryFilterDateSpecified(e DiaryEntry, f DiaryFilterOpts) bool {
 	if f.SpecifiedDate == nil {
 		return true
@@ -79,6 +90,7 @@ func DiaryFilterDateSpecified(e DiaryEntry, f DiaryFilterOpts) bool {
 	return *f.SpecifiedDate == e.SpecifiedDate
 }
 
+// ApplyDiaryFilters applies all of the given filters to a given diary
 func ApplyDiaryFilters(records DiaryEntries, opts DiaryFilterOpts, filters ...DiaryFilter) DiaryEntries {
 	// Make sure there are actually filters to be applied.
 	if len(filters) == 0 {
@@ -107,6 +119,7 @@ func ApplyDiaryFilters(records DiaryEntries, opts DiaryFilterOpts, filters ...Di
 	return filteredRecords
 }
 
+// DiaryCobraOpts allows customization of the options passed in to Cobra Cmd
 type DiaryCobraOpts struct {
 	Prefix string
 }
@@ -119,6 +132,7 @@ func prefixWithDiaryCobraOpts(opts DiaryCobraOpts) string {
 	return prefix
 }
 
+// BindDiaryFilterWithCobra inits all the pieces in a given Cmd to allow for diary filters
 func BindDiaryFilterWithCobra(cmd *cobra.Command, opts DiaryCobraOpts) {
 	prefix := prefixWithDiaryCobraOpts(opts)
 	cmd.PersistentFlags().String(prefix+"earliest", "", "Earliest diary entries")
@@ -132,6 +146,7 @@ func BindDiaryFilterWithCobra(cmd *cobra.Command, opts DiaryCobraOpts) {
 	cmd.MarkFlagsMutuallyExclusive(prefix+"year", prefix+"latest")
 }
 
+// DiaryFilterWithCobra returns a diary filter from a Cobra Cmd
 func DiaryFilterWithCobra(cmd *cobra.Command, dopts DiaryCobraOpts) (*DiaryFilterOpts, error) {
 	prefix := prefixWithDiaryCobraOpts(dopts)
 	opts := &DiaryFilterOpts{}
@@ -212,5 +227,5 @@ func timeWithCobraString(cmd *cobra.Command, s string) (*time.Time, error) {
 			return &t, nil
 		}
 	}
-	return nil, errors.New("Could not parse in to a time")
+	return nil, errors.New("could not parse in to a time")
 }

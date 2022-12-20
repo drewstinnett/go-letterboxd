@@ -32,38 +32,34 @@ func setup() {
 	zerolog.SetGlobalLevel(zerolog.InfoLevel)
 	log.Logger = log.With().Caller().Logger().Output(zerolog.ConsoleWriter{Out: os.Stderr})
 	srv = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if strings.Contains(r.URL.Path, "/dave/list/official-top-250-narrative-feature-films/page/") {
+		switch {
+		case strings.Contains(r.URL.Path, "/dave/list/official-top-250-narrative-feature-films/page/"):
 			pageNo := strings.Split(r.URL.Path, "/")[5]
 			FileToResponseWriter(fmt.Sprintf("testdata/list/lists-page-%v.html", pageNo), w)
-			return
-		} else if strings.HasPrefix(r.URL.Path, "/films/ajax/popular/size/") {
+		case strings.HasPrefix(r.URL.Path, "/films/ajax/popular/size/"):
 			FileToResponseWriter("testdata/films/popular.html", w)
-			return
-		} else if strings.HasPrefix(r.URL.Path, "/film/") {
+		case strings.HasPrefix(r.URL.Path, "/film/"):
 			FileToResponseWriter("testdata/film/sweetback.html", w)
-			return
-		} else if strings.Contains(r.URL.Path, "/actor/nicolas-cage") {
+		case strings.Contains(r.URL.Path, "/actor/nicolas-cage"):
 			FileToResponseWriter("testdata/filmography/actor/nicolas-cage.html", w)
-			return
-		} else if strings.Contains(r.URL.Path, "/someguy/films/page/") {
+		case strings.Contains(r.URL.Path, "/someguy/films/page/"):
 			pageNo := strings.Split(r.URL.Path, "/")[4]
 			FileToResponseWriter(fmt.Sprintf("testdata/user/watched-paginated/%v.html", pageNo), w)
-			return
-		} else if strings.Contains(r.URL.Path, "/someguy/following/page/") {
+		case strings.Contains(r.URL.Path, "/someguy/following/page/"):
 			pageNo := strings.Split(r.URL.Path, "/")[4]
 			FileToResponseWriter(fmt.Sprintf("testdata/user/following/%v.html", pageNo), w)
-			return
-		} else if strings.Contains(r.URL.Path, "/someguy/films/diary/") {
+		case strings.Contains(r.URL.Path, "/someguy/followers/page/"):
+			pageNo := strings.Split(r.URL.Path, "/")[4]
+			FileToResponseWriter(fmt.Sprintf("testdata/user/followers/%v.html", pageNo), w)
+		case strings.Contains(r.URL.Path, "/someguy/films/diary/"):
 			pageNo := strings.Split(r.URL.Path, "/")[5]
 			FileToResponseWriter(fmt.Sprintf("testdata/user/diary-paginated/%v.html", pageNo), w)
-			return
-		} else if strings.Contains(r.URL.Path, "someguy/watchlist/page/") {
+		case strings.Contains(r.URL.Path, "someguy/watchlist/page/"):
 			FileToResponseWriter("testdata/user/watchlist.html", w)
 			return
-		} else if r.URL.Path == "/someguy" {
+		case r.URL.Path == "/someguy":
 			FileToResponseWriter("testdata/user/user.html", w)
-			return
-		} else {
+		default:
 			log.Warn().
 				Str("url", r.URL.String()).
 				Msg("unexpected request")
