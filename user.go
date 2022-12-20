@@ -364,10 +364,6 @@ func (u *UserServiceOp) StreamWatched(ctx context.Context, userID string, rchan 
 				defer wg.Done()
 				pfilms, _, err := u.client.Film.ExtractEnhancedFilmsWithPath(ctx, fmt.Sprintf("%s/%s/films/page/%v/", u.client.BaseURL, userID, i))
 				if err != nil {
-					log.Warn().
-						Int("page", i).
-						Str("user", userID).
-						Msg("Failed to extract films")
 					return
 				}
 				for _, film := range pfilms {
