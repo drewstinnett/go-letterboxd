@@ -49,6 +49,10 @@ func setup() {
 			pageNo := strings.Split(r.URL.Path, "/")[4]
 			FileToResponseWriter(fmt.Sprintf("testdata/user/watched-paginated/%v.html", pageNo), w)
 			return
+		} else if strings.Contains(r.URL.Path, "/someguy/following/page/") {
+			pageNo := strings.Split(r.URL.Path, "/")[4]
+			FileToResponseWriter(fmt.Sprintf("testdata/user/following/%v.html", pageNo), w)
+			return
 		} else if strings.Contains(r.URL.Path, "/someguy/films/diary/") {
 			pageNo := strings.Split(r.URL.Path, "/")[5]
 			FileToResponseWriter(fmt.Sprintf("testdata/user/diary-paginated/%v.html", pageNo), w)
@@ -84,7 +88,7 @@ func TestMain(m *testing.M) {
 	os.Exit(code)
 }
 
-func TestMustNewRequst(t *testing.T) {
+func TestMustNewRequest(t *testing.T) {
 	got := MustNewRequest("GET", "https://www.example.com", nil)
 	require.NotNil(t, got)
 }

@@ -49,6 +49,7 @@ type ClientConfig struct {
 
 type Response struct {
 	*http.Response
+	pagination *Pagination
 }
 
 // NewClient Generic new client creation
@@ -149,7 +150,6 @@ func (c *Client) sendRequest(req *http.Request, extractor func(io.Reader) (inter
 	res, err := c.client.Do(req)
 	req.Close = true
 	if err != nil {
-		log.Warn().Err(err).Msg("Error sending request")
 		return nil, nil, err
 	}
 	defer res.Body.Close()
@@ -157,7 +157,7 @@ func (c *Client) sendRequest(req *http.Request, extractor func(io.Reader) (inter
 	if res.StatusCode < http.StatusOK || res.StatusCode >= http.StatusBadRequest {
 		var errRes ErrorResponse
 		// b, _ := ioutil.ReadAll(res.Body)
-		// log.Debug(string(b))
+		// log.Warn().Msgf("BOD: %+v", string(b))
 		if err = json.NewDecoder(res.Body).Decode(&errRes); err == nil {
 			return nil, nil, errors.New(errRes.Message)
 		}
@@ -179,17 +179,26 @@ func (c *Client) sendRequest(req *http.Request, extractor func(io.Reader) (inter
 	if err != nil {
 		return nil, nil, err
 	}
+	if string(b) == "" {
+		log.Warn().
+			Int("status", res.StatusCode).
+			Str("url", req.URL.String()).
+			Msg("Empty body found. Check reader...")
+	}
 	items, pagination, err := extractor(bytes.NewReader(b))
 	if err != nil {
-		log.Warn().Msg("Error parsing response")
 		return nil, nil, err
 	}
-	r := &Response{res}
+	// log.Warn().Interface("send-pagination", pagination).Send()
+	r := &Response{
+		Response: res,
+	}
 	d := &PageData{
 		Data: items,
 	}
 	if pagination != nil {
 		d.Pagintion = *pagination
+		r.pagination = pagination
 	}
 
 	return d, r, nil

@@ -101,3 +101,33 @@ func TestExtractPaginationOnFilmsPage(t *testing.T) {
 	require.Equal(t, 1, pagination.CurrentPage)
 	require.Equal(t, 10412, pagination.TotalPages)
 }
+
+func TestExtractHasNext(t *testing.T) {
+	b, err := os.Open("testdata/user/following/1.html")
+	require.NoError(t, err)
+	defer b.Close()
+	got := extractHasNext(b)
+	require.True(t, got)
+}
+
+func TestExtractNotHasNext(t *testing.T) {
+	b, err := os.Open("testdata/user/following/2.html")
+	require.NoError(t, err)
+	defer b.Close()
+	got := extractHasNext(b)
+	require.False(t, got)
+}
+
+func TestExtractHasNextBytes(t *testing.T) {
+	b, err := os.ReadFile("testdata/user/following/1.html")
+	require.NoError(t, err)
+	got := extractHasNextWithBytes(b)
+	require.True(t, got)
+}
+
+func TestExtractNotHasNextBytes(t *testing.T) {
+	b, err := os.ReadFile("testdata/user/following/2.html")
+	require.NoError(t, err)
+	got := extractHasNextWithBytes(b)
+	require.False(t, got)
+}

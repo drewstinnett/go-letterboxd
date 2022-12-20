@@ -122,3 +122,21 @@ func ExtractPaginationWithReader(r io.Reader) (*Pagination, error) {
 	}
 	return ExtractPaginationWithDoc(doc)
 }
+
+func extractHasNext(r io.Reader) bool {
+	doc, err := goquery.NewDocumentFromReader(r)
+	panicIfErr(err)
+
+	var ret bool
+	doc.Find("div.pagination").Find("a.next").EachWithBreak(func(i int, s *goquery.Selection) bool {
+		if s.Text() == "Next" {
+			ret = true
+		}
+		return false
+	})
+	return ret
+}
+
+func extractHasNextWithBytes(r []byte) bool {
+	return extractHasNext(bytes.NewReader(r))
+}
