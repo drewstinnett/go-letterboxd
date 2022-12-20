@@ -106,7 +106,6 @@ func TestUserProfileExists(t *testing.T) {
 		{user: "neverexist", expect: false},
 	}
 	for _, tt := range tests {
-
 		item, _, err := sc.User.Profile(context.TODO(), tt.user)
 		if tt.expect {
 			require.NoError(t, err)

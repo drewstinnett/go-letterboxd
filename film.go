@@ -18,11 +18,13 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
+// ExternalFilmIDs references 3rd party IDs for a given film
 type ExternalFilmIDs struct {
 	IMDB string `json:"imdb"`
 	TMDB string `json:"tmdb"`
 }
 
+// Film represents a Letterboxd Film
 type Film struct {
 	ID          string           `json:"id"`
 	Title       string           `json:"title"`
@@ -32,6 +34,7 @@ type Film struct {
 	ExternalIDs *ExternalFilmIDs `json:"external_ids,omitempty"`
 }
 
+// FilmService defines a service to handle methods against Letterboxd films
 type FilmService interface {
 	EnhanceFilm(context.Context, *Film) error
 	EnhanceFilmList(context.Context, *FilmSet) error
@@ -44,16 +47,19 @@ type FilmService interface {
 	List(context.Context, *FilmListOpts) (FilmSet, error)
 }
 
+// FilmListOpts options for listing films
 type FilmListOpts struct {
 	SortBy       string
 	ShufflePages bool
 	PageCount    int
 }
 
+// FilmServiceOp is the operator for a FilmService
 type FilmServiceOp struct {
 	client *Client
 }
 
+// FilmographyOpt is the options for a filmography
 type FilmographyOpt struct {
 	Person     string // Person whos filmography is to be fetched
 	Profession string // Profession of the person (actor, writer, director)
@@ -61,6 +67,7 @@ type FilmographyOpt struct {
 	// LastPage   int    // Last page to fetch. Defaults to FirstPage. Use -1 to fetch all pages
 }
 
+// List lists out all films using the given options
 func (f *FilmServiceOp) List(ctx context.Context, opts *FilmListOpts) (FilmSet, error) {
 	sortBy := opts.SortBy
 	if sortBy == "" {
@@ -90,16 +97,17 @@ func (f *FilmServiceOp) List(ctx context.Context, opts *FilmListOpts) (FilmSet, 
 	return allFilms, nil
 }
 
+// Validate ensures that filmography options contains the appropriate fields
 func (f *FilmographyOpt) Validate() error {
 	if f.Person == "" {
-		return fmt.Errorf("Person is required")
+		return fmt.Errorf("person is required")
 	}
 	if f.Profession == "" {
-		return fmt.Errorf("Profession is required")
+		return fmt.Errorf("profession is required")
 	}
 	profs := GetFilmographyProfessions()
 	if !StringInSlice(f.Profession, profs) {
-		return fmt.Errorf("Profession must be one of %v", profs)
+		return fmt.Errorf("profession must be one of %v", profs)
 	}
 	return nil
 }
