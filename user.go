@@ -19,6 +19,7 @@ import (
 type UserService interface {
 	Exists(context.Context, string) (bool, error)
 	Profile(context.Context, string) (*User, *Response, error)
+	Following(context.Context, string) ([]string, *Response, error)
 	// Interact with Diary
 	StreamDiary(context.Context, string, chan *DiaryEntry, chan error)
 	Diary(context.Context, string) (DiaryEntries, error)
@@ -41,6 +42,33 @@ type User struct {
 
 type UserServiceOp struct {
 	client *Client
+}
+
+func ExtractPeopleWithBytes(b []byte) (interface{}, *Pagination, error) {
+	return ExtractPeople(bytes.NewReader(b))
+}
+
+func ExtractPeople(r io.Reader) (interface{}, *Pagination, error) {
+	body, err := io.ReadAll(r)
+	if err != nil {
+		return nil, nil, err
+	}
+	hasNext := extractHasNextWithBytes(body)
+	doc, err := goquery.NewDocumentFromReader(bytes.NewReader(body))
+	if err != nil {
+		return nil, nil, err
+	}
+	p := &Pagination{
+		IsLast: !hasNext,
+	}
+	ret := []string{}
+	doc.Find("td.table-person").Find("a.name").Each(func(i int, s *goquery.Selection) {
+		name := strings.TrimSuffix(strings.TrimPrefix(s.AttrOr("href", ""), "/"), "/")
+		if name != "" {
+			ret = append(ret, name)
+		}
+	})
+	return ret, p, nil
 }
 
 func ExtractUser(r io.Reader) (interface{}, *Pagination, error) {
@@ -238,16 +266,45 @@ func (u *UserServiceOp) StreamDiary(ctx context.Context, username string, dec ch
 }
 
 func (u *UserServiceOp) Profile(ctx context.Context, userID string) (*User, *Response, error) {
-	req, err := http.NewRequest("GET", fmt.Sprintf("%s/%s", u.client.BaseURL, userID), nil)
-	if err != nil {
-		return nil, nil, err
-	}
+	req := MustNewRequest("GET", fmt.Sprintf("%s/%s", u.client.BaseURL, userID), nil)
 	user, resp, err := u.client.sendRequest(req, ExtractUser)
 	if err != nil {
 		return nil, resp, err
 	}
 	defer resp.Body.Close()
 	return user.Data.(*User), resp, nil
+}
+
+type stringsHasMore struct {
+	Values  []string
+	HasMore bool
+}
+
+func (u *UserServiceOp) Following(ctx context.Context, userID string) ([]string, *Response, error) {
+	curP := 1
+	allPeople := []string{}
+
+	// TODO: Do we want a limit thing here?
+	for {
+		req := MustNewRequest("GET", fmt.Sprintf("%s/%s/following/page/%v", u.client.BaseURL, userID, curP), nil)
+		people, resp, err := u.client.sendRequest(req, ExtractPeople)
+		if err != nil {
+			return nil, resp, err
+		}
+		err = resp.Body.Close()
+		if err != nil {
+			return nil, resp, err
+		}
+		names := people.Data.([]string)
+		allPeople = append(allPeople, names...)
+
+		// Future Drew, Check to see what hasMore is. Is it getting passed back right? I dunno...
+		if resp.pagination.IsLast {
+			break
+		}
+		curP++
+	}
+	return allPeople, nil, nil
 }
 
 func (u *UserServiceOp) Exists(ctx context.Context, userID string) (bool, error) {

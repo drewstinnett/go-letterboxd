@@ -1,6 +1,7 @@
 package letterboxd
 
 import (
+	"bytes"
 	"context"
 	"os"
 	"testing"
@@ -18,6 +19,36 @@ func TestExtractUserFilms(t *testing.T) {
 	require.NoError(t, err)
 	require.Greater(t, len(films), 70)
 	require.Equal(t, "Cypress Hill: Insane in the Brain", films[0].Title)
+}
+
+func TestExtractPeople(t *testing.T) {
+	b, err := os.ReadFile("testdata/user/following/1.html")
+	require.NoError(t, err)
+	items, pagination, err := ExtractPeople(bytes.NewReader(b))
+	require.NoError(t, err)
+
+	got, ok := items.([]string)
+	require.True(t, ok)
+	require.Equal(t, 25, len(got))
+	require.Greater(t, len(got), 0)
+	require.Equal(t, "carringtons", got[0])
+
+	require.Equal(t, false, pagination.IsLast)
+}
+
+func TestExtractPeopleWithBytes(t *testing.T) {
+	b, err := os.ReadFile("testdata/user/following/1.html")
+	require.NoError(t, err)
+	items, pagination, err := ExtractPeopleWithBytes(b)
+	require.NoError(t, err)
+
+	got, ok := items.([]string)
+	require.True(t, ok)
+	require.Equal(t, 25, len(got))
+	require.Greater(t, len(got), 0)
+	require.Equal(t, "carringtons", got[0])
+
+	require.Equal(t, false, pagination.IsLast)
 }
 
 func TestExtractUserFilmsSinglePage(t *testing.T) {
@@ -49,6 +80,13 @@ func TestUserProfile(t *testing.T) {
 	require.NoError(t, err)
 	require.IsType(t, &User{}, item)
 	require.Equal(t, 1398, item.WatchedFilmCount)
+}
+
+func TestUserFollowing(t *testing.T) {
+	item, _, err := sc.User.Following(context.TODO(), "someguy")
+	require.NoError(t, err)
+	require.Equal(t, 37, len(item))
+	require.Equal(t, "anuragkashyap", item[1])
 }
 
 func TestUserProfileExists(t *testing.T) {
