@@ -13,15 +13,13 @@ func TestExtractIDFromURL(t *testing.T) {
 		url string
 		id  string
 	}{
-		{"http://www.imdb.com/title/tt0067810/maindetails", "tt0067810"},
-		{"https://www.themoviedb.org/movie/5822/", "5822"},
-		{"https://www.google.com", ""},
+		{url: "http://www.imdb.com/title/tt0067810/maindetails", id: "tt0067810"},
+		{url: "https://www.themoviedb.org/movie/5822/", id: "5822"},
+		{url: "https://www.google.com", id: ""},
 	}
 	for _, tt := range tests {
-		t.Run(tt.url, func(t *testing.T) {
-			id := extractIDFromURL(tt.url)
-			require.Equal(t, tt.id, id)
-		})
+		id := extractIDFromURL(tt.url)
+		require.Equal(t, tt.id, id)
 	}
 }
 

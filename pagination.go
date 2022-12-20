@@ -12,15 +12,57 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
+// Pagination contains all the information about a pages pagination
 type Pagination struct {
-	CurrentPage int  `json:"current_page"`
-	NextPage    int  `json:"next_page"`
-	TotalPages  int  `json:"total_pages"`
-	TotalItems  int  `json:"total_items"`
-	IsLast      bool `json:"is_last"`
+	CurrentPage  int  `json:"current_page"`
+	NextPage     int  `json:"next_page"`
+	TotalPages   int  `json:"total_pages"`
+	TotalItems   int  `json:"total_items"`
+	ItemsPerPage int  `json:"items_per_page"`
+	IsLast       bool `json:"is_last"`
 }
 
-func ExtractPaginationWithDoc(doc *goquery.Document) (*Pagination, error) {
+// SetTotalItems will set the TotalItems count, along with anything else that needs an update
+func (p *Pagination) SetTotalItems(i int) {
+	p.TotalItems = i
+	if p.ItemsPerPage != 0 {
+		p.TotalPages = (p.TotalItems / p.ItemsPerPage) + 1
+	}
+}
+
+func (p *Pagination) parseDivPagination(doc *goquery.Document) {
+	doc.Find("div.pagination").Each(func(i int, s *goquery.Selection) {
+		nlink := s.Find("a.next").First()
+		if nlink.Text() == "Next" {
+			href, ok := nlink.Attr("href")
+			if !ok {
+				return
+			}
+			parts := strings.Split(href, "/")
+			next, err := strconv.Atoi(parts[len(parts)-2])
+			if err != nil {
+				return
+			}
+			p.CurrentPage = next - 1
+		}
+		plink := s.Find("a.previous").First()
+		if plink.Text() == "Previous" {
+			href, ok := nlink.Attr("href")
+			if !ok {
+				return
+			}
+			parts := strings.Split(href, "/")
+			prev, err := strconv.Atoi(parts[len(parts)-2])
+			if err != nil {
+				log.Warn().Err(err).Msg("Error detecting previous page")
+				return
+			}
+			p.CurrentPage = prev + 1
+		}
+	})
+}
+
+func paginationFromDivPaginatePages(doc *goquery.Document) (*Pagination, error) {
 	p := &Pagination{}
 	doc.Find("div.paginate-pages").Each(func(i int, s *goquery.Selection) {
 		s.Find("li").Each(func(i int, s *goquery.Selection) {
@@ -46,58 +88,45 @@ func ExtractPaginationWithDoc(doc *goquery.Document) (*Pagination, error) {
 			}
 		})
 	})
+	return paginationIfCurrent(p)
+}
 
-	// Hmmm, haven't found pagination info yet, check to see if it's one of those weird film list pages
-	if p.CurrentPage == 0 {
-		doc.Find("p.ui-block-heading").Each(func(i int, s *goquery.Selection) {
-			maybe := s.Text()
-			maybe = strings.ReplaceAll(strings.TrimSpace(maybe), ",", "")
-			r := regexp.MustCompile(`There are (\d+)`)
-			matches := r.FindStringSubmatch(maybe)
-			if len(matches) > 1 {
-				count, err := strconv.Atoi(matches[1])
-				if err != nil {
-					log.Warn().Msg("Could not extract film count for pagination")
-					return
-				}
-				p.TotalItems = count
-				p.TotalPages = (count / 72) + 1
-				// Ok, now try to detect the current page based on previous/next
-				doc.Find("div.pagination").Each(func(i int, s *goquery.Selection) {
-					nlink := s.Find("a.next").First()
-					if nlink.Text() == "Next" {
-						href, ok := nlink.Attr("href")
-						if !ok {
-							return
-						}
-						parts := strings.Split(href, "/")
-						next, err := strconv.Atoi(parts[len(parts)-2])
-						if err != nil {
-							log.Warn().Err(err).Msg("Error detecting next page")
-							return
-						}
-						p.CurrentPage = next - 1
-					}
-					plink := s.Find("a.previous").First()
-					if plink.Text() == "Previous" {
-						href, ok := nlink.Attr("href")
-						if !ok {
-							return
-						}
-						parts := strings.Split(href, "/")
-						prev, err := strconv.Atoi(parts[len(parts)-2])
-						if err != nil {
-							log.Warn().Err(err).Msg("Error detecting previous page")
-							return
-						}
-						p.CurrentPage = prev + 1
-					}
-				})
-			}
-		})
+func paginationFromBlockHeading(doc *goquery.Document) (*Pagination, error) {
+	p := &Pagination{
+		ItemsPerPage: 72,
 	}
+	doc.Find("p.ui-block-heading").Each(func(i int, s *goquery.Selection) {
+		matches := regexp.MustCompile(`There are (\d+)`).FindStringSubmatch(strings.ReplaceAll(strings.TrimSpace(s.Text()), ",", ""))
+		if len(matches) > 1 {
+			count, err := strconv.Atoi(matches[1])
+			if err != nil {
+				return
+			}
+			p.SetTotalItems(count)
+			p.parseDivPagination(doc)
+		}
+	})
+	return paginationIfCurrent(p)
+}
+
+func paginationIfCurrent(p *Pagination) (*Pagination, error) {
 	if p.CurrentPage == 0 {
-		return nil, errors.New("Could not extract pagination, no current page")
+		return p, errors.New("no pagination found")
+	}
+	return p, nil
+}
+
+// ExtractPaginationWithDoc returns a pagination object from a goquery Doc
+func ExtractPaginationWithDoc(doc *goquery.Document) (*Pagination, error) {
+	p, err := paginationFromDivPaginatePages(doc)
+	// Hmmm, haven't found pagination info yet, check to see if it's one of those weird film list pages
+	if err != nil {
+		p, err = paginationFromBlockHeading(doc)
+	}
+
+	// Dang, still no pagination??
+	if err != nil {
+		return nil, errors.New("could not extract pagination, no current page")
 	}
 	if p.CurrentPage == p.TotalPages {
 		p.IsLast = true
@@ -107,6 +136,7 @@ func ExtractPaginationWithDoc(doc *goquery.Document) (*Pagination, error) {
 	return p, nil
 }
 
+// ExtractPaginationWithBytes pulls the pagination in from a given byte array
 func ExtractPaginationWithBytes(b []byte) (*Pagination, error) {
 	doc, err := goquery.NewDocumentFromReader(bytes.NewReader(b))
 	if err != nil {
@@ -115,6 +145,7 @@ func ExtractPaginationWithBytes(b []byte) (*Pagination, error) {
 	return ExtractPaginationWithDoc(doc)
 }
 
+// ExtractPaginationWithReader pulls the pagination from an io.Reader
 func ExtractPaginationWithReader(r io.Reader) (*Pagination, error) {
 	doc, err := goquery.NewDocumentFromReader(r)
 	if err != nil {

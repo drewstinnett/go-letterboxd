@@ -89,6 +89,14 @@ func TestUserFollowing(t *testing.T) {
 	require.Equal(t, "anuragkashyap", item[1])
 }
 
+func TestUserFollowers(t *testing.T) {
+	item, _, err := sc.User.Followers(context.TODO(), "someguy")
+	require.NoError(t, err)
+
+	require.Equal(t, 48, len(item))
+	require.Equal(t, "schatzi", item[1])
+}
+
 func TestUserProfileExists(t *testing.T) {
 	tests := []struct {
 		user   string
@@ -98,7 +106,6 @@ func TestUserProfileExists(t *testing.T) {
 		{user: "neverexist", expect: false},
 	}
 	for _, tt := range tests {
-
 		item, _, err := sc.User.Profile(context.TODO(), tt.user)
 		if tt.expect {
 			require.NoError(t, err)
