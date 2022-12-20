@@ -12,6 +12,7 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
+// Pagination contains all the information about a pages pagination
 type Pagination struct {
 	CurrentPage int  `json:"current_page"`
 	NextPage    int  `json:"next_page"`
@@ -20,6 +21,7 @@ type Pagination struct {
 	IsLast      bool `json:"is_last"`
 }
 
+// ExtractPaginationWithDoc returns a pagination object from a goquery Doc
 func ExtractPaginationWithDoc(doc *goquery.Document) (*Pagination, error) {
 	p := &Pagination{}
 	doc.Find("div.paginate-pages").Each(func(i int, s *goquery.Selection) {
@@ -97,7 +99,7 @@ func ExtractPaginationWithDoc(doc *goquery.Document) (*Pagination, error) {
 		})
 	}
 	if p.CurrentPage == 0 {
-		return nil, errors.New("Could not extract pagination, no current page")
+		return nil, errors.New("could not extract pagination, no current page")
 	}
 	if p.CurrentPage == p.TotalPages {
 		p.IsLast = true
@@ -107,6 +109,7 @@ func ExtractPaginationWithDoc(doc *goquery.Document) (*Pagination, error) {
 	return p, nil
 }
 
+// ExtractPaginationWithBytes pulls the pagination in from a given byte array
 func ExtractPaginationWithBytes(b []byte) (*Pagination, error) {
 	doc, err := goquery.NewDocumentFromReader(bytes.NewReader(b))
 	if err != nil {
@@ -115,6 +118,7 @@ func ExtractPaginationWithBytes(b []byte) (*Pagination, error) {
 	return ExtractPaginationWithDoc(doc)
 }
 
+// ExtractPaginationWithReader pulls the pagination from an io.Reader
 func ExtractPaginationWithReader(r io.Reader) (*Pagination, error) {
 	doc, err := goquery.NewDocumentFromReader(r)
 	if err != nil {

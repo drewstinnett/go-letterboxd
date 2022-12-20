@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"time"
 
 	"github.com/go-redis/cache/v8"
@@ -231,4 +232,12 @@ func dclose(c io.Closer) {
 	if err := c.Close(); err != nil {
 		panic(err)
 	}
+}
+
+func mustParseURL(path string) *url.URL {
+	u, err := url.Parse(path)
+	if err != nil {
+		panic(err)
+	}
+	return u
 }
