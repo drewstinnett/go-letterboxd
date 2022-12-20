@@ -434,12 +434,8 @@ func extractIDFromURL(url string) string {
 	return ""
 }
 
-func extractFilmography(r io.Reader) (interface{}, *Pagination, error) {
+func previewsWithDoc(doc *goquery.Document) FilmSet {
 	var previews FilmSet
-	doc, err := goquery.NewDocumentFromReader(r)
-	if err != nil {
-		return nil, nil, err
-	}
 	doc.Find("li.poster-container").Each(func(i int, s *goquery.Selection) {
 		s.Find("div").Each(func(i int, s *goquery.Selection) {
 			if s.HasClass("film-poster") {
@@ -447,7 +443,6 @@ func extractFilmography(r io.Reader) (interface{}, *Pagination, error) {
 				f.ID = s.AttrOr("data-film-id", "")
 				f.Slug = normalizeSlug(s.AttrOr("data-film-slug", ""))
 				f.Target = s.AttrOr("data-target-link", "")
-				// Real film name appears in the alt attribute for the poster
 				s.Find("img.image").Each(func(i int, s *goquery.Selection) {
 					f.Title = s.AttrOr("alt", "")
 				})
@@ -455,6 +450,15 @@ func extractFilmography(r io.Reader) (interface{}, *Pagination, error) {
 			}
 		})
 	})
+	return previews
+}
+
+func extractFilmography(r io.Reader) (interface{}, *Pagination, error) {
+	doc, err := goquery.NewDocumentFromReader(r)
+	if err != nil {
+		return nil, nil, err
+	}
+	previews := previewsWithDoc(doc)
 	return previews, nil, nil
 }
 

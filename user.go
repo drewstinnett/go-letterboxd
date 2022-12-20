@@ -131,7 +131,7 @@ func (u *UserServiceOp) Diary(ctx context.Context, username string) (DiaryEntrie
 	for loop := true; loop; {
 		select {
 		case d := <-c:
-			items = append(items, *d)
+			items = append(items, d)
 		case err := <-dc:
 			if err != nil {
 				log.Error().Err(err).Msg("Failed to get watched films")
@@ -175,7 +175,7 @@ func (u *UserServiceOp) StreamDiary(ctx context.Context, username string, dec ch
 	// If more than 1 page, get the last page too, which will likely be a
 	// partial batch of films
 	if pagination.TotalPages > 1 {
-		var lastEntries []*DiaryEntry
+		var lastEntries DiaryEntries
 		lastEntries, _, err = u.extractDiaryEntryWithPath(username, pagination.TotalPages)
 		if err != nil {
 			done <- err
@@ -242,13 +242,13 @@ type stringsHasMore struct {
 }
 */
 
-func (u *UserServiceOp) Followers(ctx context.Context, userID string) ([]string, *Response, error) {
+func (u *UserServiceOp) peopleWithPath(userID, path string) ([]string, *Response, error) {
 	curP := 1
 	allPeople := []string{}
 
 	// TODREW: Do we want a limit thing here?
 	for {
-		req := MustNewRequest("GET", fmt.Sprintf("%s/%s/followers/page/%v", u.client.BaseURL, userID, curP), nil)
+		req := MustNewRequest("GET", fmt.Sprintf("%s/%s/%s/page/%v", u.client.BaseURL, userID, path, curP), nil)
 		people, resp, err := u.client.sendRequest(req, ExtractPeople)
 		if err != nil {
 			return nil, resp, err
@@ -268,32 +268,22 @@ func (u *UserServiceOp) Followers(ctx context.Context, userID string) ([]string,
 	return allPeople, nil, nil
 }
 
+// Followers returns a list of users a given id is following
+func (u *UserServiceOp) Followers(ctx context.Context, userID string) ([]string, *Response, error) {
+	allPeople, resp, err := u.peopleWithPath(userID, "followers")
+	if err != nil {
+		return nil, resp, err
+	}
+	return allPeople, resp, nil
+}
+
 // Following returns a list of users following a given user
 func (u *UserServiceOp) Following(ctx context.Context, userID string) ([]string, *Response, error) {
-	curP := 1
-	allPeople := []string{}
-
-	// TODREW: Do we want a limit thing here?
-	for {
-		req := MustNewRequest("GET", fmt.Sprintf("%s/%s/following/page/%v", u.client.BaseURL, userID, curP), nil)
-		people, resp, err := u.client.sendRequest(req, ExtractPeople)
-		if err != nil {
-			return nil, resp, err
-		}
-		err = resp.Body.Close()
-		if err != nil {
-			return nil, resp, err
-		}
-		names := people.Data.([]string)
-		allPeople = append(allPeople, names...)
-
-		// Future Drew, Check to see what hasMore is. Is it getting passed back right? I dunno...
-		if resp.pagination.IsLast {
-			break
-		}
-		curP++
+	allPeople, resp, err := u.peopleWithPath(userID, "following")
+	if err != nil {
+		return nil, resp, err
 	}
-	return allPeople, nil, nil
+	return allPeople, resp, nil
 }
 
 // Exists returns a boolion on if a user exists
@@ -333,7 +323,6 @@ func (u *UserServiceOp) WatchList(ctx context.Context, userID string) (FilmSet, 
 
 // StreamWatched streams a given list of Watched films
 func (u *UserServiceOp) StreamWatched(ctx context.Context, userID string, rchan chan *Film, done chan error) {
-	var err error
 	var pagination *Pagination
 	defer func() {
 		done <- nil
@@ -392,29 +381,13 @@ func (u *UserServiceOp) StreamWatched(ctx context.Context, userID string, rchan 
 
 // ExtractUserFilms returns a list of films from an io.Reader
 func ExtractUserFilms(r io.Reader) (interface{}, *Pagination, error) {
-	var previews FilmSet
 	var pageBuf bytes.Buffer
 	tee := io.TeeReader(r, &pageBuf)
 	doc, err := goquery.NewDocumentFromReader(tee)
 	if err != nil {
 		return nil, nil, err
 	}
-	doc.Find("li.poster-container").Each(func(i int, s *goquery.Selection) {
-		s.Find("div").Each(func(i int, s *goquery.Selection) {
-			if s.HasClass("film-poster") {
-				f := Film{}
-				f.ID = s.AttrOr("data-film-id", "")
-				// f.Slug = s.AttrOr("data-film-slug", "")
-				f.Slug = normalizeSlug(s.AttrOr("data-film-slug", ""))
-				f.Target = s.AttrOr("data-target-link", "")
-				// Real film name appears in the alt attribute for the poster
-				s.Find("img.image").Each(func(i int, s *goquery.Selection) {
-					f.Title = s.AttrOr("alt", "")
-				})
-				previews = append(previews, &f)
-			}
-		})
-	})
+	previews := previewsWithDoc(doc)
 	pagination, err := ExtractPaginationWithReader(&pageBuf)
 	if err != nil {
 		log.Warn().Msg("No pagination data found, assuming it to be a single page")
@@ -549,7 +522,7 @@ func (u *UserServiceOp) StreamWatchList(
 	}
 }
 
-func (u *UserServiceOp) extractDiaryEntryWithPath(username string, page int) ([]*DiaryEntry, *Pagination, error) {
+func (u *UserServiceOp) extractDiaryEntryWithPath(username string, page int) (DiaryEntries, *Pagination, error) {
 	var pData *PageData
 	req, err := http.NewRequest("GET", fmt.Sprintf("%s/%v/films/diary/page/%v/", u.client.BaseURL, username, page), nil)
 	if err != nil {
@@ -561,22 +534,13 @@ func (u *UserServiceOp) extractDiaryEntryWithPath(username string, page int) ([]
 	if err != nil {
 		return nil, nil, err
 	}
-	entries := pData.Data.([]*DiaryEntry)
+	entries := pData.Data.(DiaryEntries)
 	return entries, &pData.Pagintion, nil
 }
 
-// ExtractDiaryEntries returns a list of DiaryEntries
-func (u *UserServiceOp) ExtractDiaryEntries(r io.Reader) (interface{}, *Pagination, error) {
-	entries := []*DiaryEntry{}
-	_ = entries
-	doc, err := goquery.NewDocumentFromReader(r)
-	if err != nil {
-		return nil, nil, err
-	}
-	pagination, err := ExtractPaginationWithDoc(doc)
-	if err != nil {
-		return nil, nil, err
-	}
+func (u *UserServiceOp) diaryEntriesWithDoc(doc *goquery.Document) DiaryEntries {
+	entries := DiaryEntries{}
+	var err error
 	doc.Find(".diary-entry-edit").Each(func(i int, s *goquery.Selection) {
 		entry := &DiaryEntry{}
 		// Figure out date watched
@@ -588,11 +552,9 @@ func (u *UserServiceOp) ExtractDiaryEntries(r io.Reader) (interface{}, *Paginati
 				entry.Watched = &t
 			}
 		}
-		sDateS, ok := s.Find("a").Attr("data-specified-date")
-		if ok {
-			if sDateS == "true" {
-				entry.SpecifiedDate = true
-			}
+		sDateS := s.Find("a").AttrOr("data-specified-date", "")
+		if sDateS == "true" {
+			entry.SpecifiedDate = true
 		}
 
 		// Figure out if a date was a rewatch
@@ -631,12 +593,26 @@ func (u *UserServiceOp) ExtractDiaryEntries(r io.Reader) (interface{}, *Paginati
 
 		entries = append(entries, entry)
 	})
+	return entries
+}
+
+// ExtractDiaryEntries returns a list of DiaryEntries
+func (u *UserServiceOp) ExtractDiaryEntries(r io.Reader) (interface{}, *Pagination, error) {
+	doc, err := goquery.NewDocumentFromReader(r)
+	if err != nil {
+		return nil, nil, err
+	}
+	pagination, err := ExtractPaginationWithDoc(doc)
+	if err != nil {
+		return nil, nil, err
+	}
+	entries := u.diaryEntriesWithDoc(doc)
 	return entries, pagination, nil
 }
 
 // SlurpDiary is just a helper to quickly read in all Diary streams
-func SlurpDiary(itemC chan *DiaryEntry, doneC chan error) ([]*DiaryEntry, error) {
-	var ret []*DiaryEntry
+func SlurpDiary(itemC chan *DiaryEntry, doneC chan error) (DiaryEntries, error) {
+	var ret DiaryEntries
 	for loop := true; loop; {
 		select {
 		case film := <-itemC:

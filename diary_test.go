@@ -15,7 +15,7 @@ func TestExtractUserDiary(t *testing.T) {
 	require.NoError(t, err)
 
 	itemsI, _, err := sc.User.ExtractDiaryEntries(bytes.NewReader(data))
-	items := itemsI.([]*DiaryEntry)
+	items := itemsI.(DiaryEntries)
 	require.NoError(t, err)
 	require.Equal(t, len(items), 50)
 	require.Equal(t, 7, *items[0].Rating)

@@ -19,7 +19,7 @@ type DiaryEntry struct {
 }
 
 // DiaryEntries is multiple DiaryEntry items
-type DiaryEntries []DiaryEntry
+type DiaryEntries []*DiaryEntry
 
 // DiaryFilterOpts provides options for filtering a user diary
 type DiaryFilterOpts struct {
@@ -105,7 +105,7 @@ func ApplyDiaryFilters(records DiaryEntries, opts DiaryFilterOpts, filters ...Di
 		keep := true
 
 		for _, f := range filters {
-			if !f(r, opts) {
+			if !f(*r, opts) {
 				keep = false
 				break
 			}
