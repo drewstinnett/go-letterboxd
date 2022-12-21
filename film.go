@@ -421,28 +421,32 @@ func extractFilmFromFilmPage(r io.Reader) (interface{}, *Pagination, error) {
 		}
 		//}
 	})
-	doc.Find("a").Each(func(i int, s *goquery.Selection) {
-		f.ExternalIDs = externalIDsWithSelection(s)
-		/*
+	f.ExternalIDs = externalIDsWithDoc(doc)
+	/*
+			doc.Find("a").Each(func(i int, s *goquery.Selection) {
+				f.ExternalIDs = externalIDsWithSelection(s)
+				log.Warn().Interface("thing", f).Send()
 			if val, ok := s.Attr("data-track-action"); ok && val == "IMDb" {
 				f.ExternalIDs.IMDB = extractIDFromURL(s.AttrOr("href", ""))
 			}
 			if val, ok := s.Attr("data-track-action"); ok && val == "TMDb" {
 				f.ExternalIDs.TMDB = extractIDFromURL(s.AttrOr("href", ""))
 			}
-		*/
-	})
+		})
+	*/
 	return f, nil, nil
 }
 
-func externalIDsWithSelection(s *goquery.Selection) *ExternalFilmIDs {
+func externalIDsWithDoc(doc *goquery.Document) *ExternalFilmIDs {
 	e := &ExternalFilmIDs{}
-	if val, ok := s.Attr("data-track-action"); ok && val == "IMDb" {
-		e.IMDB = extractIDFromURL(s.AttrOr("href", ""))
-	}
-	if val, ok := s.Attr("data-track-action"); ok && val == "TMDb" {
-		e.TMDB = extractIDFromURL(s.AttrOr("href", ""))
-	}
+	doc.Find("a").Each(func(i int, s *goquery.Selection) {
+		if val, ok := s.Attr("data-track-action"); ok && val == "IMDb" {
+			e.IMDB = extractIDFromURL(s.AttrOr("href", ""))
+		}
+		if val, ok := s.Attr("data-track-action"); ok && val == "TMDb" {
+			e.TMDB = extractIDFromURL(s.AttrOr("href", ""))
+		}
+	})
 	return e
 }
 
