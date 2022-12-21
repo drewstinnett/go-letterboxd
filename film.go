@@ -119,11 +119,11 @@ type FilmBatchOpts struct {
 }
 
 // StreamBatch Get a bunch of different films at once and stream them back to the user
-func (f *FilmServiceOp) StreamBatch(ctx context.Context, batchOpts *FilmBatchOpts, filmsC chan *Film, done chan error) {
+func (f *FilmServiceOp) StreamBatch(ctx context.Context, batchOpts *FilmBatchOpts, filmsC chan *Film, done chan error) { //nolint:golint,gocognit
 	defer func() {
-		log.Debug().Msg("Completed Stream Batch")
 		done <- nil
 	}()
+	// TODREW: Can these next few segments be more generalized?
 	for _, username := range batchOpts.Watched {
 		userFilmC := make(chan *Film)
 		userDone := make(chan error)
@@ -158,7 +158,6 @@ func (f *FilmServiceOp) StreamBatch(ctx context.Context, batchOpts *FilmBatchOpt
 	}
 
 	for _, user := range batchOpts.WatchList {
-		// userFilms := []Film{}
 		listFilmC := make(chan *Film)
 		listDone := make(chan error)
 		go f.client.User.StreamWatchList(ctx, user, listFilmC, listDone)
@@ -176,52 +175,57 @@ func (f *FilmServiceOp) StreamBatch(ctx context.Context, batchOpts *FilmBatchOpt
 	}
 }
 
+func filmsWithFilmsInterface(fi []interface{}) (FilmSet, error) {
+	films := FilmSet{}
+	for _, i := range fi {
+		var d Film
+		err := mapstructure.Decode(i, &d)
+		if err != nil {
+			return nil, err
+		}
+		films = append(films, &d)
+	}
+	return films, nil
+}
+
 // ExtractFilmsWithPath Given a url path, return a list of films it contains
 func (f *FilmServiceOp) ExtractFilmsWithPath(ctx context.Context, path string) (FilmSet, *Pagination, error) {
 	u := mustParseURL(path)
 	key := fmt.Sprintf("/letterboxd/fullpage%s", u.Path)
 	var inCache bool
 	var pData *PageData
-	var films FilmSet
 
 	if ctx == nil {
 		ctx = context.Background()
 	}
 
+	var films FilmSet
 	if f.client.Cache != nil {
 		if err := f.client.Cache.Get(ctx, key, &pData); err == nil {
 			inCache = true
-			fi := pData.Data.([]interface{})
-			for _, i := range fi {
-				var d Film
-				err := mapstructure.Decode(i, &d)
-				if err != nil {
-					return nil, nil, err
-				}
-				films = append(films, &d)
+			films, err = filmsWithFilmsInterface(pData.Data.([]interface{}))
+			if err != nil {
+				return nil, nil, err
 			}
 		}
 	}
 
 	if !inCache {
-		log.Debug().Str("key", key).Msg("Page not in cache, fetching from Letterboxd.com")
 		var url string
 		if strings.HasPrefix(path, "http") {
 			url = path
 		} else {
 			url = fmt.Sprintf("%v%v", f.client.BaseURL, path)
 		}
-		req, err := http.NewRequest("GET", url, nil)
-		if err != nil {
-			return nil, nil, err
-		}
+		req := MustNewRequest("GET", url, nil)
+
 		var resp *Response
+		var err error
 		pData, resp, err = f.client.sendRequest(req, ExtractUserFilms)
 		if err != nil {
 			return nil, nil, err
 		}
 		defer dclose(resp.Body) // nolint:golint,bodyclose
-		log.Debug().Str("key", key).Msg("Page fetched from Letterboxd.com")
 		films = pData.Data.(FilmSet)
 		if f.client.Cache != nil {
 			if err := f.client.Cache.Set(&cache.Item{
@@ -382,47 +386,68 @@ func (f *FilmServiceOp) EnhanceFilmList(ctx context.Context, films *FilmSet) err
 	return nil
 }
 
-func extractFilmFromFilmPage(r io.Reader) (interface{}, *Pagination, error) {
-	f := &Film{
+// NewFilm initializes a new Film pointer
+func NewFilm() *Film {
+	return &Film{
 		ExternalIDs: &ExternalFilmIDs{},
 	}
-	doc, err := goquery.NewDocumentFromReader(r)
-	if err != nil {
-		return nil, nil, err
-	}
+}
+
+func extractFilmFromFilmPage(r io.Reader) (interface{}, *Pagination, error) {
+	f := NewFilm()
+	doc := mustNewDocumentFromReader(r)
 	doc.Find("meta").Each(func(i int, s *goquery.Selection) {
+		var err error
 		if val, ok := s.Attr("property"); ok && val == "og:title" {
 			fullTitle := s.AttrOr("content", "")
 			f.Year, err = extractYearFromTitle(fullTitle)
-			if err != nil {
-				log.Debug().Err(err).Str("fullTitle", fullTitle).Msg("Error detecting year")
-			} else {
+			if err == nil {
 				f.Title = fullTitle[0 : len(fullTitle)-7]
 			}
 		}
 	})
-	doc.Find("div").Find("div").Each(func(i int, s *goquery.Selection) {
-		if s.HasClass("poster film-poster") {
-			if f.Slug == "" {
-				f.Slug = normalizeSlug(s.AttrOr("data-film-slug", ""))
-			}
-			if f.Target == "" {
-				f.Target = s.AttrOr("data-target-link", "")
-			}
-			if f.ID == "" {
-				f.ID = s.AttrOr("data-film-id", "")
-			}
+	/*doc.Find("div").Find("div").Each(func(i int, s *goquery.Selection) {
+	if s.HasClass("poster film-poster") {*/
+	doc.Find("div").Find("div").Find(".poster").Each(func(i int, s *goquery.Selection) {
+		// if s.HasClass("poster film-poster") {
+		if f.Slug == "" {
+			f.Slug = normalizeSlug(s.AttrOr("data-film-slug", ""))
 		}
+		if f.Target == "" {
+			f.Target = s.AttrOr("data-target-link", "")
+		}
+		if f.ID == "" {
+			f.ID = s.AttrOr("data-film-id", "")
+		}
+		//}
 	})
+	f.ExternalIDs = externalIDsWithDoc(doc)
+	/*
+			doc.Find("a").Each(func(i int, s *goquery.Selection) {
+				f.ExternalIDs = externalIDsWithSelection(s)
+				log.Warn().Interface("thing", f).Send()
+			if val, ok := s.Attr("data-track-action"); ok && val == "IMDb" {
+				f.ExternalIDs.IMDB = extractIDFromURL(s.AttrOr("href", ""))
+			}
+			if val, ok := s.Attr("data-track-action"); ok && val == "TMDb" {
+				f.ExternalIDs.TMDB = extractIDFromURL(s.AttrOr("href", ""))
+			}
+		})
+	*/
+	return f, nil, nil
+}
+
+func externalIDsWithDoc(doc *goquery.Document) *ExternalFilmIDs {
+	e := &ExternalFilmIDs{}
 	doc.Find("a").Each(func(i int, s *goquery.Selection) {
 		if val, ok := s.Attr("data-track-action"); ok && val == "IMDb" {
-			f.ExternalIDs.IMDB = extractIDFromURL(s.AttrOr("href", ""))
+			e.IMDB = extractIDFromURL(s.AttrOr("href", ""))
 		}
 		if val, ok := s.Attr("data-track-action"); ok && val == "TMDb" {
-			f.ExternalIDs.TMDB = extractIDFromURL(s.AttrOr("href", ""))
+			e.TMDB = extractIDFromURL(s.AttrOr("href", ""))
 		}
 	})
-	return f, nil, nil
+	return e
 }
 
 func extractIDFromURL(url string) string {

@@ -2,10 +2,12 @@ package letterboxd
 
 import (
 	"errors"
+	"io"
 	"math/rand"
 	"strings"
 	"time"
 
+	"github.com/PuerkitoBio/goquery"
 	"github.com/rs/zerolog/log"
 )
 
@@ -80,4 +82,12 @@ func populateRemainingPages(count, total int, shuffle bool) []int {
 		remainingPages = makeRange(2, count+1)
 	}
 	return remainingPages
+}
+
+func mustNewDocumentFromReader(r io.Reader) *goquery.Document {
+	doc, err := goquery.NewDocumentFromReader(r)
+	if err != nil {
+		panic(err)
+	}
+	return doc
 }

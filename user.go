@@ -534,54 +534,63 @@ func (u *UserServiceOp) extractDiaryEntryWithPath(username string, page int) (Di
 	return entries, &pData.Pagintion, nil
 }
 
+// NewDiaryEntry returns a new DiaryEntry with attributes for a goquery.Selection
+func NewDiaryEntry(s *goquery.Selection) *DiaryEntry {
+	entry := &DiaryEntry{}
+	// Figure out date watched
+	val, ok := s.Find("a").Attr("data-viewing-date")
+	if ok {
+		var t time.Time
+		var err error
+		t, err = time.Parse("2006-01-02", val)
+		if err == nil {
+			entry.Watched = &t
+		}
+	}
+	// Was it a specified date?
+	sDateS := s.Find("a").AttrOr("data-specified-date", "")
+	if sDateS == "true" {
+		entry.SpecifiedDate = true
+	}
+	// Figure out the rating
+	val, ok = s.Find("a").Attr("data-rating")
+	if ok {
+		rating, err := strconv.Atoi(val)
+		if err != nil {
+			log.Warn().Msg("Error getting rating")
+		}
+		entry.Rating = &rating
+	}
+
+	// Figure out if a date was a rewatch
+	rewatchS, ok := s.Find("a").Attr("data-rewatch")
+	if ok {
+		if rewatchS == "true" {
+			entry.Rewatch = true
+		}
+	}
+
+	// Figure out the title slug
+	val, ok = s.Find("a").Attr("data-film-poster")
+	if ok {
+		parts := strings.Split(val, "/")
+		if len(parts) != 5 {
+			log.Warn().Interface("parts", parts).Msg("Hmmm...error converting film poster to slug")
+		} else {
+			entry.Slug = &parts[2]
+		}
+	}
+
+	return entry
+}
+
 func (u *UserServiceOp) diaryEntriesWithDoc(doc *goquery.Document) DiaryEntries {
 	entries := DiaryEntries{}
 	var err error
 	doc.Find(".diary-entry-edit").Each(func(i int, s *goquery.Selection) {
-		entry := &DiaryEntry{}
-		// Figure out date watched
-		val, ok := s.Find("a").Attr("data-viewing-date")
-		if ok {
-			var t time.Time
-			t, err = time.Parse("2006-01-02", val)
-			if err == nil {
-				entry.Watched = &t
-			}
-		}
-		sDateS := s.Find("a").AttrOr("data-specified-date", "")
-		if sDateS == "true" {
-			entry.SpecifiedDate = true
-		}
+		entry := NewDiaryEntry(s)
 
-		// Figure out if a date was a rewatch
-		rewatchS, ok := s.Find("a").Attr("data-rewatch")
-		if ok {
-			if rewatchS == "true" {
-				entry.Rewatch = true
-			}
-		}
-
-		// Figure out the rating
-		val, ok = s.Find("a").Attr("data-rating")
-		if ok {
-			var rating int
-			rating, err = strconv.Atoi(val)
-			if err != nil {
-				log.Warn().Msg("Error getting rating")
-			}
-			entry.Rating = &rating
-		}
-
-		// Figure out the title slug
-		val, ok = s.Find("a").Attr("data-film-poster")
-		if ok {
-			parts := strings.Split(val, "/")
-			if len(parts) != 5 {
-				log.Warn().Interface("parts", parts).Msg("Hmmm...error converting film poster to slug")
-			} else {
-				entry.Slug = &parts[2]
-			}
-		}
+		// This one is a little harder to fetch
 		entry.Film, err = u.client.Film.Get(context.TODO(), *entry.Slug)
 		if err != nil {
 			log.Warn().Err(err).Msg("Error looking up film")
