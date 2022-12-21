@@ -30,35 +30,43 @@ func (p *Pagination) SetTotalItems(i int) {
 	}
 }
 
+func (p *Pagination) parseDivPaginationNext(s *goquery.Selection) {
+	nlink := s.Find("a.next").First()
+	if nlink.Text() == "Next" {
+		href, ok := nlink.Attr("href")
+		if !ok {
+			return
+		}
+		parts := strings.Split(href, "/")
+		next, err := strconv.Atoi(parts[len(parts)-2])
+		if err != nil {
+			return
+		}
+		p.CurrentPage = next - 1
+	}
+}
+
+func (p *Pagination) parseDivPaginationPrevious(s *goquery.Selection) {
+	plink := s.Find("a.previous").First()
+	if plink.Text() == "Previous" {
+		href, ok := plink.Attr("href")
+		if !ok {
+			return
+		}
+		parts := strings.Split(href, "/")
+		prev, err := strconv.Atoi(parts[len(parts)-2])
+		if err != nil {
+			log.Warn().Err(err).Msg("Error detecting previous page")
+			return
+		}
+		p.CurrentPage = prev + 1
+	}
+}
+
 func (p *Pagination) parseDivPagination(doc *goquery.Document) {
 	doc.Find("div.pagination").Each(func(i int, s *goquery.Selection) {
-		nlink := s.Find("a.next").First()
-		if nlink.Text() == "Next" {
-			href, ok := nlink.Attr("href")
-			if !ok {
-				return
-			}
-			parts := strings.Split(href, "/")
-			next, err := strconv.Atoi(parts[len(parts)-2])
-			if err != nil {
-				return
-			}
-			p.CurrentPage = next - 1
-		}
-		plink := s.Find("a.previous").First()
-		if plink.Text() == "Previous" {
-			href, ok := nlink.Attr("href")
-			if !ok {
-				return
-			}
-			parts := strings.Split(href, "/")
-			prev, err := strconv.Atoi(parts[len(parts)-2])
-			if err != nil {
-				log.Warn().Err(err).Msg("Error detecting previous page")
-				return
-			}
-			p.CurrentPage = prev + 1
-		}
+		p.parseDivPaginationNext(s)
+		p.parseDivPaginationPrevious(s)
 	})
 }
 
