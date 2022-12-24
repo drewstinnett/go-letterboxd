@@ -12,7 +12,6 @@ import (
 	"io"
 	"math/rand"
 	"net/http"
-	"net/url"
 	"time"
 
 	"github.com/go-redis/cache/v8"
@@ -275,6 +274,7 @@ func dclose(c io.Closer) {
 	}
 }
 
+/*
 func mustParseURL(path string) *url.URL {
 	u, err := url.Parse(path)
 	if err != nil {
@@ -282,3 +282,4 @@ func mustParseURL(path string) *url.URL {
 	}
 	return u
 }
+*/

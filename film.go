@@ -13,7 +13,6 @@ import (
 
 	"github.com/PuerkitoBio/goquery"
 	"github.com/go-redis/cache/v8"
-	"github.com/mitchellh/mapstructure"
 	"github.com/rs/zerolog/log"
 )
 
@@ -175,6 +174,7 @@ func (f *FilmServiceOp) StreamBatch(ctx context.Context, batchOpts *FilmBatchOpt
 	}
 }
 
+/*
 func filmsWithFilmsInterface(fi []interface{}) (FilmSet, error) {
 	films := FilmSet{}
 	for _, i := range fi {
@@ -187,46 +187,40 @@ func filmsWithFilmsInterface(fi []interface{}) (FilmSet, error) {
 	}
 	return films, nil
 }
+*/
 
 // ExtractFilmsWithPath Given a url path, return a list of films it contains
 func (f *FilmServiceOp) ExtractFilmsWithPath(ctx context.Context, path string) (FilmSet, *Pagination, error) {
-	u := mustParseURL(path)
-	key := fmt.Sprintf("/letterboxd/fullpage%s", u.Path)
-	var inCache bool
+	// u := mustParseURL(path)
+	// key := fmt.Sprintf("/letterboxd/fullpage%s", u.Path)
+	// var inCache bool
 	var pData *PageData
 	var resp *Response
 
-	if ctx == nil {
-		ctx = context.Background()
-	}
+	/*
+		if ctx == nil {
+			ctx = context.Background()
+		}
+	*/
 
 	var films FilmSet
-	if f.client.Cache != nil {
-		if err := f.client.Cache.Get(ctx, key, &pData); err == nil {
-			inCache = true
-			films, err = filmsWithFilmsInterface(pData.Data.([]interface{}))
-			if err != nil {
-				return nil, nil, err
-			}
-		}
+
+	var url string
+	if strings.HasPrefix(path, "http") {
+		url = path
+	} else {
+		url = fmt.Sprintf("%v%v", f.client.BaseURL, path)
 	}
+	req := MustNewRequest("GET", url, nil)
 
-	if !inCache {
-		var url string
-		if strings.HasPrefix(path, "http") {
-			url = path
-		} else {
-			url = fmt.Sprintf("%v%v", f.client.BaseURL, path)
-		}
-		req := MustNewRequest("GET", url, nil)
-
-		var err error
-		pData, resp, err = f.client.sendRequest(req, ExtractUserFilms)
-		if err != nil {
-			return nil, nil, err
-		}
-		defer dclose(resp.Body) // nolint:golint,bodyclose
-		films = pData.Data.(FilmSet)
+	var err error
+	pData, resp, err = f.client.sendRequest(req, ExtractUserFilms)
+	if err != nil {
+		return nil, nil, err
+	}
+	defer dclose(resp.Body) // nolint:golint,bodyclose
+	films = pData.Data.(FilmSet)
+	/*
 		if f.client.Cache != nil {
 			if err := f.client.Cache.Set(&cache.Item{
 				Ctx:   ctx,
@@ -237,7 +231,7 @@ func (f *FilmServiceOp) ExtractFilmsWithPath(ctx context.Context, path string) (
 				log.Warn().Err(err).Msg("Error Writing Cache")
 			}
 		}
-	}
+	*/
 
 	return films, &pData.Pagination, nil
 }
