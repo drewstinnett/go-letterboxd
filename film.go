@@ -194,6 +194,7 @@ func (f *FilmServiceOp) ExtractFilmsWithPath(ctx context.Context, path string) (
 	key := fmt.Sprintf("/letterboxd/fullpage%s", u.Path)
 	var inCache bool
 	var pData *PageData
+	var resp *Response
 
 	if ctx == nil {
 		ctx = context.Background()
@@ -219,7 +220,6 @@ func (f *FilmServiceOp) ExtractFilmsWithPath(ctx context.Context, path string) (
 		}
 		req := MustNewRequest("GET", url, nil)
 
-		var resp *Response
 		var err error
 		pData, resp, err = f.client.sendRequest(req, ExtractUserFilms)
 		if err != nil {
@@ -239,7 +239,7 @@ func (f *FilmServiceOp) ExtractFilmsWithPath(ctx context.Context, path string) (
 		}
 	}
 
-	return films, &pData.Pagintion, nil
+	return films, &pData.Pagination, nil
 }
 
 // ExtractEnhancedFilmsWithPath returns a list of data enriched films from a URL path
@@ -252,32 +252,46 @@ func (f *FilmServiceOp) ExtractEnhancedFilmsWithPath(ctx context.Context, path s
 	log.Debug().Msg("Launching EnhanceFilmList")
 	err = f.client.Film.EnhanceFilmList(ctx, &films)
 	if err != nil {
-		return nil, nil, err
+		return nil, pagination, err
 	}
 
 	return films, pagination, nil
+}
+
+func filmWithCache(c *cache.Cache, key string) *Film {
+	ctx := context.Background()
+	var retFilm *Film
+	if c != nil {
+		log.Debug().Msg("Using cache for lookup")
+		if err := c.Get(ctx, key, &retFilm); err == nil {
+			return retFilm
+		}
+	}
+	return nil
 }
 
 // Get returns a single film from the slug
 func (f *FilmServiceOp) Get(ctx context.Context, slug string) (*Film, error) {
 	// Determine if we need to get the cached version or not
 	key := fmt.Sprintf("/letterboxd/film/%s", slug)
-	var retFilm Film
-	var inCache bool
+	// var inCache bool
 	if ctx == nil {
 		ctx = context.Background()
 	}
-	if f.client.Cache != nil {
-		log.Debug().Msg("Using cache for lookup")
-		if err := f.client.Cache.Get(ctx, key, &retFilm); err == nil {
-			log.Debug().Str("key", key).Msg("Found film in cache")
-			inCache = true
-		} else {
-			log.Debug().Err(err).Str("key", key).Msg("Found NOT film in cache")
+	retFilm := filmWithCache(f.client.Cache, key)
+	/*
+		if f.client.Cache != nil {
+			log.Debug().Msg("Using cache for lookup")
+			if err := f.client.Cache.Get(ctx, key, &retFilm); err == nil {
+				log.Debug().Str("key", key).Msg("Found film in cache")
+				inCache = true
+			} else {
+				log.Debug().Err(err).Str("key", key).Msg("Found NOT film in cache")
+			}
 		}
-	}
+	*/
 
-	if !inCache {
+	if retFilm == nil {
 		log.Debug().Str("key", key).Msg("Film not in cache, fetching from Letterboxd.com")
 		req, err := http.NewRequest("GET", fmt.Sprintf("%s/film/%s", f.client.BaseURL, slug), nil)
 		if err != nil {
@@ -288,7 +302,8 @@ func (f *FilmServiceOp) Get(ctx context.Context, slug string) (*Film, error) {
 			return nil, err
 		}
 		defer dclose(resp.Body)
-		retFilm = *item.Data.(*Film)
+		retFilmP := *item.Data.(*Film)
+		retFilm = &retFilmP
 		log.Debug().Str("key", key).Msg("Film fetched from Letterboxd.com")
 
 		if f.client.Cache != nil {
@@ -302,7 +317,7 @@ func (f *FilmServiceOp) Get(ctx context.Context, slug string) (*Film, error) {
 			}
 		}
 	}
-	return &retFilm, nil
+	return retFilm, nil
 }
 
 // Filmography returns the Filmography based on certain options
@@ -422,18 +437,6 @@ func extractFilmFromFilmPage(r io.Reader) (interface{}, *Pagination, error) {
 		//}
 	})
 	f.ExternalIDs = externalIDsWithDoc(doc)
-	/*
-			doc.Find("a").Each(func(i int, s *goquery.Selection) {
-				f.ExternalIDs = externalIDsWithSelection(s)
-				log.Warn().Interface("thing", f).Send()
-			if val, ok := s.Attr("data-track-action"); ok && val == "IMDb" {
-				f.ExternalIDs.IMDB = extractIDFromURL(s.AttrOr("href", ""))
-			}
-			if val, ok := s.Attr("data-track-action"); ok && val == "TMDb" {
-				f.ExternalIDs.TMDB = extractIDFromURL(s.AttrOr("href", ""))
-			}
-		})
-	*/
 	return f, nil, nil
 }
 
