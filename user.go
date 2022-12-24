@@ -260,7 +260,7 @@ func (u *UserServiceOp) peopleWithPath(userID, path string) ([]string, *Response
 		names := people.Data.([]string)
 		allPeople = append(allPeople, names...)
 
-		if resp.pagination.IsLast {
+		if people.Pagination.IsLast {
 			break
 		}
 		curP++
@@ -312,8 +312,7 @@ func (u *UserServiceOp) WatchList(ctx context.Context, userID string) (FilmSet, 
 			log.Warn().Err(err).Msg("Failed to enhance film list")
 		}
 		previews = append(previews, partialFilms...)
-		log.Debug().Interface("pagination", items.Pagintion).Msg("pagination")
-		if items.Pagintion.IsLast {
+		if items.Pagination.IsLast {
 			break
 		}
 		page++
@@ -531,7 +530,7 @@ func (u *UserServiceOp) extractDiaryEntryWithPath(username string, page int) (Di
 		return nil, nil, err
 	}
 	entries := pData.Data.(DiaryEntries)
-	return entries, &pData.Pagintion, nil
+	return entries, &pData.Pagination, nil
 }
 
 // NewDiaryEntry returns a new DiaryEntry with attributes for a goquery.Selection

@@ -5,12 +5,13 @@ package letterboxd
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
+	"math/rand"
 	"net/http"
-	"net/url"
 	"time"
 
 	"github.com/go-redis/cache/v8"
@@ -57,7 +58,7 @@ type ClientConfig struct {
 // Response holds the http response and metadata arounda given request
 type Response struct {
 	*http.Response
-	pagination *Pagination
+	// pagination *Pagination
 }
 
 // NewClient Generic new client creation
@@ -121,8 +122,8 @@ func NewClient(config *ClientConfig) *Client {
 
 // PageData just provides Pagination info and 'Data'
 type PageData struct {
-	Data      interface{}
-	Pagintion Pagination
+	Data       interface{}
+	Pagination Pagination
 }
 
 /*
@@ -154,63 +155,102 @@ func NewThrottledTransport(limitPeriod time.Duration, requestCount int, transpor
 }
 */
 
-func (c *Client) sendRequest(req *http.Request, extractor func(io.Reader) (interface{}, *Pagination, error)) (*PageData, *Response, error) {
-	res, err := c.client.Do(req)
-	req.Close = true
-	if err != nil {
-		return nil, nil, err
+func (c *Client) getFromCache(ctx context.Context, key string) *PageData {
+	var pData *PageData
+	if c.Cache != nil {
+		if err := c.Cache.Get(ctx, key, pData); err == nil {
+			return pData
+		}
 	}
-	defer dclose(res.Body)
+	return nil
+}
 
+func (c *Client) setCache(ctx context.Context, key string, pData PageData) {
+	if c.Cache != nil {
+		max, min := 72, 24
+		cacheFor := rand.Intn(max-min) + min // nolint:golint,gosec
+		if err := c.Cache.Set(&cache.Item{
+			Ctx:   ctx,
+			Key:   key,
+			Value: pData,
+			TTL:   time.Hour * time.Duration(cacheFor),
+		}); err != nil {
+			log.Warn().Err(err).Msg("Error Writing Cache")
+		}
+	}
+}
+
+// checkResponse is just a little helper to see if an http.Response is good or not
+func checkResponse(res *http.Response) error {
+	// func (c *Client) checkResponse(res *http.Response) error {
+	var err error
 	if res.StatusCode < http.StatusOK || res.StatusCode >= http.StatusBadRequest {
 		var errRes ErrorResponse
-		// b, _ := ioutil.ReadAll(res.Body)
-		// log.Warn().Msgf("BOD: %+v", string(b))
 		if err = json.NewDecoder(res.Body).Decode(&errRes); err == nil {
-			return nil, nil, errors.New(errRes.Message)
+			return errors.New(errRes.Message)
 		}
 
 		switch {
 		case res.StatusCode == http.StatusTooManyRequests:
-			return nil, nil, fmt.Errorf("too many requests.  Check rate limit and make sure the userAgent is set right")
+			return fmt.Errorf("too many requests.  Check rate limit and make sure the userAgent is set right")
 		case res.StatusCode == http.StatusNotFound:
+			return fmt.Errorf("that entry was not found, are you sure it exists?")
+		default:
+			return fmt.Errorf("error, status code: %d", res.StatusCode)
+		}
+	}
+	return nil
+}
+
+func (c *Client) sendRequest(req *http.Request, extractor func(io.Reader) (interface{}, *Pagination, error)) (*PageData, *Response, error) {
+	key := fmt.Sprintf("/letterboxd/fullpage%s", req.URL.Path)
+
+	// Do we have this page cached?
+	pData := c.getFromCache(context.TODO(), key)
+	// Did we get an actual PageData back, or just nil?
+	if pData == nil {
+		res, err := c.client.Do(req)
+		req.Close = true
+		if err != nil {
+			return nil, nil, err
+		}
+		defer dclose(res.Body)
+
+		err = checkResponse(res)
+		if err != nil {
+			return nil, nil, err
+		}
+
+		b, err := io.ReadAll(res.Body)
+		if err != nil {
+			return nil, nil, err
+		}
+		if string(b) == "" {
 			log.Warn().
 				Int("status", res.StatusCode).
 				Str("url", req.URL.String()).
-				Msg("Not found")
-			return nil, nil, fmt.Errorf("that entry was not found, are you sure it exists?")
-		default:
-			return nil, nil, fmt.Errorf("error, status code: %d", res.StatusCode)
+				Msg("Empty body found. Check reader...")
 		}
-	}
+		items, pagination, err := extractor(bytes.NewReader(b))
+		if err != nil {
+			return nil, nil, err
+		}
+		// log.Warn().Interface("send-pagination", pagination).Send()
+		d := &PageData{
+			Data: items,
+		}
+		if pagination != nil {
+			d.Pagination = *pagination
+		}
 
-	b, err := io.ReadAll(res.Body)
-	if err != nil {
-		return nil, nil, err
-	}
-	if string(b) == "" {
-		log.Warn().
-			Int("status", res.StatusCode).
-			Str("url", req.URL.String()).
-			Msg("Empty body found. Check reader...")
-	}
-	items, pagination, err := extractor(bytes.NewReader(b))
-	if err != nil {
-		return nil, nil, err
-	}
-	// log.Warn().Interface("send-pagination", pagination).Send()
-	r := &Response{
-		Response: res,
-	}
-	d := &PageData{
-		Data: items,
-	}
-	if pagination != nil {
-		d.Pagintion = *pagination
-		r.pagination = pagination
-	}
+		// Save to cache before returning
+		c.setCache(context.TODO(), key, *d)
 
-	return d, r, nil
+		return d, &Response{
+			Response: res,
+		}, nil
+	}
+	return pData, nil, nil
 }
 
 // ErrorResponse just contains the errors of a response
@@ -234,6 +274,7 @@ func dclose(c io.Closer) {
 	}
 }
 
+/*
 func mustParseURL(path string) *url.URL {
 	u, err := url.Parse(path)
 	if err != nil {
@@ -241,3 +282,4 @@ func mustParseURL(path string) *url.URL {
 	}
 	return u
 }
+*/
