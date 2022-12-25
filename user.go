@@ -213,7 +213,7 @@ func (u *UserServiceOp) StreamDiary(ctx context.Context, username string, dec ch
 
 // Profile returns a bunch of information about a given user
 func (u *UserServiceOp) Profile(ctx context.Context, userID string) (*User, *Response, error) {
-	req := MustNewRequest("GET", fmt.Sprintf("%s/%s", u.client.BaseURL, userID), nil)
+	req := mustNewGetRequest(fmt.Sprintf("%s/%s", u.client.baseURL, userID))
 	user, resp, err := u.client.sendRequest(req, ExtractUser)
 	if err != nil {
 		return nil, resp, err
@@ -235,20 +235,13 @@ func (u *UserServiceOp) Profile(ctx context.Context, userID string) (*User, *Res
 	return userD, resp, nil
 }
 
-/*
-type stringsHasMore struct {
-	Values  []string
-	HasMore bool
-}
-*/
-
 func (u *UserServiceOp) peopleWithPath(userID, path string) ([]string, *Response, error) {
 	curP := 1
 	allPeople := []string{}
 
 	// TODREW: Do we want a limit thing here?
 	for {
-		req := MustNewRequest("GET", fmt.Sprintf("%s/%s/%s/page/%v", u.client.BaseURL, userID, path, curP), nil)
+		req := mustNewGetRequest(fmt.Sprintf("%s/%s/%s/page/%v", u.client.baseURL, userID, path, curP))
 		people, resp, err := u.client.sendRequest(req, ExtractPeople)
 		if err != nil {
 			return nil, resp, err
@@ -298,7 +291,7 @@ func (u *UserServiceOp) WatchList(ctx context.Context, userID string) (FilmSet, 
 	// TODREW: This can loop forever
 	for {
 		log.Info().Int("page", page).Msg("pagination")
-		req, err := http.NewRequest("GET", fmt.Sprintf("%s/%s/watchlist/page/%d", u.client.BaseURL, userID, page), nil)
+		req, err := http.NewRequest("GET", fmt.Sprintf("%s/%s/watchlist/page/%d", u.client.baseURL, userID, page), nil)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -328,7 +321,7 @@ func (u *UserServiceOp) StreamWatched(ctx context.Context, userID string, rchan 
 	}()
 
 	// Get the first page. This seeds the pagination.
-	firstFilms, pagination, err := u.client.Film.ExtractEnhancedFilmsWithPath(ctx, fmt.Sprintf("%s/%s/films/page/1", u.client.BaseURL, userID))
+	firstFilms, pagination, err := u.client.Film.ExtractEnhancedFilmsWithPath(ctx, fmt.Sprintf("%s/%s/films/page/1", u.client.baseURL, userID))
 	if err != nil {
 		done <- err
 	}
@@ -343,7 +336,7 @@ func (u *UserServiceOp) StreamWatched(ctx context.Context, userID string, rchan 
 	// partial batch of films
 	if pagination.TotalPages > 1 {
 		var lastFilms FilmSet
-		lastFilms, _, err = u.client.Film.ExtractEnhancedFilmsWithPath(ctx, fmt.Sprintf("%s/%s/films/page/%v", u.client.BaseURL, userID, pagination.TotalPages))
+		lastFilms, _, err = u.client.Film.ExtractEnhancedFilmsWithPath(ctx, fmt.Sprintf("%s/%s/films/page/%v", u.client.baseURL, userID, pagination.TotalPages))
 		if err != nil {
 			done <- err
 		}
@@ -361,7 +354,7 @@ func (u *UserServiceOp) StreamWatched(ctx context.Context, userID string, rchan 
 		for i := 2; i < pagination.TotalPages; i++ {
 			go func(i int) {
 				defer wg.Done()
-				pfilms, _, err := u.client.Film.ExtractEnhancedFilmsWithPath(ctx, fmt.Sprintf("%s/%s/films/page/%v/", u.client.BaseURL, userID, i))
+				pfilms, _, err := u.client.Film.ExtractEnhancedFilmsWithPath(ctx, fmt.Sprintf("%s/%s/films/page/%v/", u.client.baseURL, userID, i))
 				if err != nil {
 					return
 				}
@@ -410,7 +403,7 @@ func (u *UserServiceOp) StreamList(
 		log.Debug().Msg("Closing StreamList")
 		done <- nil
 	}()
-	firstFilms, pagination, err := u.client.Film.ExtractEnhancedFilmsWithPath(ctx, fmt.Sprintf("%s/%s/list/%s/page/1", u.client.BaseURL, username, slug))
+	firstFilms, pagination, err := u.client.Film.ExtractEnhancedFilmsWithPath(ctx, fmt.Sprintf("%s/%s/list/%s/page/1", u.client.baseURL, username, slug))
 	if err != nil {
 		done <- err
 	}
@@ -425,7 +418,7 @@ func (u *UserServiceOp) StreamList(
 	// partial batch of films
 	if pagination.TotalPages > 1 {
 		var lastFilms FilmSet
-		lastFilms, _, err = u.client.Film.ExtractEnhancedFilmsWithPath(ctx, fmt.Sprintf("%s/%s/list/%s/page/%v", u.client.BaseURL, username, slug, pagination.TotalPages))
+		lastFilms, _, err = u.client.Film.ExtractEnhancedFilmsWithPath(ctx, fmt.Sprintf("%s/%s/list/%s/page/%v", u.client.baseURL, username, slug, pagination.TotalPages))
 		if err != nil {
 			done <- err
 		}
@@ -443,7 +436,7 @@ func (u *UserServiceOp) StreamList(
 		for i := 2; i < pagination.TotalPages; i++ {
 			go func(i int) {
 				defer wg.Done()
-				pfilms, _, err := u.client.Film.ExtractEnhancedFilmsWithPath(ctx, fmt.Sprintf("%s/%s/list/%v/page/%v/", u.client.BaseURL, username, slug, i))
+				pfilms, _, err := u.client.Film.ExtractEnhancedFilmsWithPath(ctx, fmt.Sprintf("%s/%s/list/%v/page/%v/", u.client.baseURL, username, slug, i))
 				if err != nil {
 					log.Warn().Int("page", i).Str("user", username).Msg("Failed to extract films")
 					return
@@ -470,7 +463,7 @@ func (u *UserServiceOp) StreamWatchList(
 		log.Debug().Msg("Closing StreamWatchList")
 		done <- nil
 	}()
-	firstFilms, pagination, err := u.client.Film.ExtractEnhancedFilmsWithPath(ctx, fmt.Sprintf("%s/%s/watchlist/page/1", u.client.BaseURL, username))
+	firstFilms, pagination, err := u.client.Film.ExtractEnhancedFilmsWithPath(ctx, fmt.Sprintf("%s/%s/watchlist/page/1", u.client.baseURL, username))
 	if err != nil {
 		done <- err
 	}
@@ -485,7 +478,7 @@ func (u *UserServiceOp) StreamWatchList(
 	// partial batch of films
 	if pagination.TotalPages > 1 {
 		var lastFilms FilmSet
-		lastFilms, _, err = u.client.Film.ExtractEnhancedFilmsWithPath(ctx, fmt.Sprintf("%s/%s/watchlist/page/%v", u.client.BaseURL, username, pagination.TotalPages))
+		lastFilms, _, err = u.client.Film.ExtractEnhancedFilmsWithPath(ctx, fmt.Sprintf("%s/%s/watchlist/page/%v", u.client.baseURL, username, pagination.TotalPages))
 		if err != nil {
 			done <- err
 		}
@@ -503,7 +496,7 @@ func (u *UserServiceOp) StreamWatchList(
 		for i := 2; i < pagination.TotalPages; i++ {
 			go func(i int) {
 				defer wg.Done()
-				pfilms, _, err := u.client.Film.ExtractEnhancedFilmsWithPath(ctx, fmt.Sprintf("%s/%s/watchlist/page/%v/", u.client.BaseURL, username, i))
+				pfilms, _, err := u.client.Film.ExtractEnhancedFilmsWithPath(ctx, fmt.Sprintf("%s/%s/watchlist/page/%v/", u.client.baseURL, username, i))
 				if err != nil {
 					log.Warn().Int("page", i).Str("user", username).Msg("Failed to extract films")
 					return
@@ -519,7 +512,7 @@ func (u *UserServiceOp) StreamWatchList(
 
 func (u *UserServiceOp) extractDiaryEntryWithPath(username string, page int) (DiaryEntries, *Pagination, error) {
 	var pData *PageData
-	req, err := http.NewRequest("GET", fmt.Sprintf("%s/%v/films/diary/page/%v/", u.client.BaseURL, username, page), nil)
+	req, err := http.NewRequest("GET", fmt.Sprintf("%s/%v/films/diary/page/%v/", u.client.baseURL, username, page), nil)
 	if err != nil {
 		return nil, nil, err
 	}

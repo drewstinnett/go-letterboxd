@@ -32,6 +32,9 @@ type Film struct {
 	ExternalIDs *ExternalFilmIDs `json:"external_ids,omitempty"`
 }
 
+// Professions is a string array of all the professions this module cares about
+var Professions = []string{"actor", "director", "producer", "writer"}
+
 // FilmService defines a service to handle methods against Letterboxd films
 type FilmService interface {
 	EnhanceFilm(context.Context, *Film) error
@@ -103,9 +106,8 @@ func (f *FilmographyOpt) Validate() error {
 	if f.Profession == "" {
 		return fmt.Errorf("profession is required")
 	}
-	profs := GetFilmographyProfessions()
-	if !StringInSlice(f.Profession, profs) {
-		return fmt.Errorf("profession must be one of %v", profs)
+	if !stringInSlice(f.Profession, Professions) {
+		return fmt.Errorf("profession must be one of %v", Professions)
 	}
 	return nil
 }
@@ -209,9 +211,9 @@ func (f *FilmServiceOp) ExtractFilmsWithPath(ctx context.Context, path string) (
 	if strings.HasPrefix(path, "http") {
 		url = path
 	} else {
-		url = fmt.Sprintf("%v%v", f.client.BaseURL, path)
+		url = fmt.Sprintf("%v%v", f.client.baseURL, path)
 	}
-	req := MustNewRequest("GET", url, nil)
+	req := mustNewGetRequest(url)
 
 	var err error
 	pData, resp, err = f.client.sendRequest(req, ExtractUserFilms)
@@ -287,7 +289,7 @@ func (f *FilmServiceOp) Get(ctx context.Context, slug string) (*Film, error) {
 
 	if retFilm == nil {
 		log.Debug().Str("key", key).Msg("Film not in cache, fetching from Letterboxd.com")
-		req, err := http.NewRequest("GET", fmt.Sprintf("%s/film/%s", f.client.BaseURL, slug), nil)
+		req, err := http.NewRequest("GET", fmt.Sprintf("%s/film/%s", f.client.baseURL, slug), nil)
 		if err != nil {
 			return nil, err
 		}
@@ -322,7 +324,7 @@ func (f *FilmServiceOp) Filmography(ctx context.Context, opt *FilmographyOpt) (F
 		return nil, err
 	}
 
-	req, err := http.NewRequest("GET", fmt.Sprintf("%s/%s/%s", f.client.BaseURL, opt.Profession, opt.Person), nil)
+	req, err := http.NewRequest("GET", fmt.Sprintf("%s/%s/%s", f.client.baseURL, opt.Profession, opt.Person), nil)
 	if err != nil {
 		return nil, err
 	}

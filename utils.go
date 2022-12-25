@@ -36,8 +36,8 @@ func normalizeSlug(slug string) string {
 	return slug
 }
 
-// StringInSlice is a tiny helper to determin if a slice of strings contains a specific string
-func StringInSlice(a string, list []string) bool {
+// stringInSlice is a tiny helper to determin if a slice of strings contains a specific string
+func stringInSlice(a string, list []string) bool {
 	for _, b := range list {
 		if b == a {
 			return true

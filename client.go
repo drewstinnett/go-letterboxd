@@ -10,7 +10,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"math/rand"
 	"net/http"
 	"time"
 
@@ -20,8 +19,9 @@ import (
 )
 
 const (
-	baseURL  = "https://letterboxd.com"
-	maxPages = 50
+	baseURL   = "https://letterboxd.com"
+	maxPages  = 50
+	userAgent = "letterrestd"
 )
 
 // Client represents the thing containing services and methods for interacting with Letterboxd
@@ -29,7 +29,7 @@ type Client struct {
 	client    *http.Client
 	UserAgent string
 	// Config    ClientConfig
-	BaseURL string
+	baseURL string
 	// Options
 	MaxConcurrentPages int
 	Cache              *cache.Cache
@@ -37,10 +37,7 @@ type Client struct {
 	User UserService
 	Film FilmService
 	List ListService
-	// List    ListService
-	URL URLService
-	// Location  LocationService
-	// Volume    VolumeService
+	URL  URLService
 }
 
 // ClientConfig is the configuration strcut for the client
@@ -53,68 +50,69 @@ type ClientConfig struct {
 	RedisPassword      string
 	RedisDB            int
 	Cache              *cache.Cache
+	CacheTime          *time.Duration
+	// Maybe favor this instead of cache.Cache?
+	RedisClient *redis.Client
 }
 
 // Response holds the http response and metadata arounda given request
 type Response struct {
 	*http.Response
+	FromCache bool
 	// pagination *Pagination
 }
 
-// NewClient Generic new client creation
-func NewClient(config *ClientConfig) *Client {
-	if config == nil {
-		tr := &http.Transport{
-			MaxIdleConns:       10,
-			IdleConnTimeout:    30 * time.Second,
-			DisableCompression: true,
-		}
-		config = &ClientConfig{
-			HTTPClient: &http.Client{
-				Timeout:   time.Second * 10,
-				Transport: tr,
-			},
-			BaseURL:            baseURL,
-			MaxConcurrentPages: maxPages,
-		}
+// WithCache applies a given cache.Cache to the letterboxd library
+func WithCache(cc *cache.Cache) func(*Client) {
+	return func(c *Client) {
+		c.Cache = cc
 	}
-	if config.HTTPClient == nil {
-		config.HTTPClient = http.DefaultClient
-	}
+}
 
-	userAgent := "letterrestd"
+// WithNoCache removes the default cache
+func WithNoCache() func(*Client) {
+	return func(c *Client) {
+		c.Cache = nil
+	}
+}
+
+// WithBaseURL sets the url (Example: https://letterboxd.com) to use for scraping
+func WithBaseURL(u string) func(*Client) {
+	return func(c *Client) {
+		c.baseURL = u
+	}
+}
+
+// New returns a new client using functional options
+func New(options ...func(*Client)) *Client {
+	// Set up some sane defaults
 	c := &Client{
-		client:    config.HTTPClient,
-		UserAgent: userAgent,
-		BaseURL:   baseURL,
+		client: &http.Client{
+			Timeout: time.Second * 10,
+			Transport: &http.Transport{
+				MaxIdleConns:       10,
+				IdleConnTimeout:    30 * time.Second,
+				DisableCompression: true,
+			},
+		},
+		UserAgent:          userAgent,
+		baseURL:            baseURL,
+		MaxConcurrentPages: maxPages,
+		Cache: cache.New(&cache.Options{
+			Redis: redis.NewClient(&redis.Options{
+				Addr: "127.0.0.1:6379",
+			}),
+			LocalCache: cache.NewTinyLFU(1000, time.Minute),
+		}),
 	}
 
-	if !config.DisableCache {
-		log.Info().Msg("Configuring local cache inside client")
-		if config.Cache != nil {
-			c.Cache = config.Cache
-		} else {
-			if config.RedisHost == "" {
-				log.Fatal().Msg("Cache is not disabled and no RedisHost or Cache specified")
-			}
-			rdb := redis.NewClient(&redis.Options{
-				Addr:     config.RedisHost,
-				Password: config.RedisPassword,
-				DB:       config.RedisDB,
-			})
-
-			c.Cache = cache.New(&cache.Options{
-				Redis:      rdb,
-				LocalCache: cache.NewTinyLFU(1000, time.Minute),
-			})
-		}
+	// Apply all the options
+	for _, o := range options {
+		o(c)
 	}
 
-	// c.Location = &LocationServiceOp{client: c}
-	// c.Volume = &VolumeServiceOp{client: c}
 	c.User = &UserServiceOp{client: c}
 	c.Film = &FilmServiceOp{client: c}
-	// c.List = &ListServiceOp{client: c}
 	c.URL = &URLServiceOp{client: c}
 	c.List = &ListServiceOp{client: c}
 	return c
@@ -167,13 +165,13 @@ func (c *Client) getFromCache(ctx context.Context, key string) *PageData {
 
 func (c *Client) setCache(ctx context.Context, key string, pData PageData) {
 	if c.Cache != nil {
-		max, min := 72, 24
-		cacheFor := rand.Intn(max-min) + min // nolint:golint,gosec
+		// max, min := 72, 24
+		// cacheFor := rand.Intn(max-min) + min // nolint:golint,gosec
 		if err := c.Cache.Set(&cache.Item{
 			Ctx:   ctx,
 			Key:   key,
 			Value: pData,
-			TTL:   time.Hour * time.Duration(cacheFor),
+			TTL:   time.Hour * 24,
 		}); err != nil {
 			log.Warn().Err(err).Msg("Error Writing Cache")
 		}
@@ -247,10 +245,13 @@ func (c *Client) sendRequest(req *http.Request, extractor func(io.Reader) (inter
 		c.setCache(context.TODO(), key, *d)
 
 		return d, &Response{
-			Response: res,
+			Response:  res,
+			FromCache: false,
 		}, nil
 	}
-	return pData, nil, nil
+	return pData, &Response{
+		FromCache: true,
+	}, nil
 }
 
 // ErrorResponse just contains the errors of a response
@@ -258,14 +259,19 @@ type ErrorResponse struct {
 	Message string `json:"errors"`
 }
 
-// MustNewRequest is a wrapper around http.NewRequest that panics if an error
+// mustNewRequest is a wrapper around http.NewRequest that panics if an error
 // occurs
-func MustNewRequest(method, url string, body io.Reader) *http.Request {
+func mustNewRequest(method, url string, body io.Reader) *http.Request {
 	req, err := http.NewRequest(method, url, body)
 	if err != nil {
 		panic(err)
 	}
 	return req
+}
+
+// mustNewGetRequest is a simple wrapper to do a get request with no body
+func mustNewGetRequest(url string) *http.Request {
+	return mustNewRequest("GET", url, nil)
 }
 
 func dclose(c io.Closer) {

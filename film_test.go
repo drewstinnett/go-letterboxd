@@ -4,6 +4,7 @@ import (
 	"context"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 )
@@ -171,4 +172,26 @@ func TestFilmsList(t *testing.T) {
 	require.NotNil(t, got)
 	require.NotEmpty(t, got)
 	require.Equal(t, 72, len(got))
+}
+
+func TestSendRequestCached(t *testing.T) {
+	// First fetch should not be from the cache
+	sccMock.ClearExpect()
+
+	req := mustNewGetRequest("https://www.letterboxd.com/film/sweet-sweetbacks-baadasssss-song")
+
+	key := "/letterboxd/fullpage/film/sweet-sweetbacks-baadasssss-song"
+	sccMock.ExpectGet(key).RedisNil()
+	sccMock.Regexp().ExpectSet(key, `.*`, time.Hour*24).SetVal("OK")
+	_, resp, err := scc.sendRequest(req, extractFilmFromFilmPage)
+	require.NoError(t, err)
+	require.Equal(t, false, resp.FromCache)
+
+	// Next one SHOULD be from the cache
+	// sccMock.ExpectGet(key).SetVal("ok")
+	// sccMock.ExpectGet(key).RedisNil()
+	_, _, err = scc.sendRequest(req, extractFilmFromFilmPage)
+	require.NoError(t, err)
+	// require.Equal(t, true, resp.FromCache)
+	require.NoError(t, sccMock.ExpectationsWereMet())
 }

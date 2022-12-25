@@ -13,11 +13,17 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"github.com/stretchr/testify/require"
+
+	"github.com/go-redis/cache/v8"
+	"github.com/go-redis/redis/v8"
+	"github.com/go-redis/redismock/v8"
 )
 
 var (
-	srv *httptest.Server
-	sc  *Client
+	srv     *httptest.Server
+	sc      *Client
+	scc     *Client
+	sccMock redismock.ClientMock
 )
 
 // FileToResponseWriter is a helper utility to load a page right in to the http response
@@ -67,10 +73,24 @@ func setup() {
 		}
 		defer r.Body.Close()
 	}))
-	sc = NewClient(&ClientConfig{
-		DisableCache: true,
-	})
-	sc.BaseURL = srv.URL
+
+	// Non-Caching Client
+	sc = New(
+		WithNoCache(),
+		WithBaseURL(srv.URL),
+	)
+
+	// Caching Client
+	var db *redis.Client
+	db, sccMock = redismock.NewClientMock()
+	scc = New(
+		WithCache(
+			cache.New(&cache.Options{
+				Redis: db,
+			}),
+		),
+		WithBaseURL(srv.URL),
+	)
 }
 
 func shutdown() {
@@ -85,6 +105,11 @@ func TestMain(m *testing.M) {
 }
 
 func TestMustNewRequest(t *testing.T) {
-	got := MustNewRequest("GET", "https://www.example.com", nil)
-	require.NotNil(t, got)
+	require.NotNil(t, mustNewRequest("GET", "https://www.example.com", nil))
+	require.NotNil(t, mustNewGetRequest("https://www.example.com"))
+}
+
+func TestNew(t *testing.T) {
+	c := New()
+	require.NotNil(t, c)
 }
