@@ -19,6 +19,27 @@ func TestURLFilmographyActor(t *testing.T) {
 	require.Greater(t, len(items.(FilmSet)), 0)
 }
 
+func TestURLWatchlist(t *testing.T) {
+	items, err := sc.URL.Items(context.TODO(), "/singleguy/watchlist")
+	require.NoError(t, err)
+	require.IsType(t, FilmSet{}, items)
+	require.Greater(t, len(items.(FilmSet)), 0)
+}
+
+func TestURLList(t *testing.T) {
+	items, err := sc.URL.Items(context.TODO(), "/dave/list/official-top-250-narrative-feature-films")
+	require.NoError(t, err)
+	require.IsType(t, FilmSet{}, items)
+	require.Greater(t, len(items.(FilmSet)), 0)
+}
+
+func TestURLFilms(t *testing.T) {
+	items, err := sc.URL.Items(context.TODO(), "/singleguy/films")
+	require.NoError(t, err)
+	require.IsType(t, FilmSet{}, items)
+	require.Greater(t, len(items.(FilmSet)), 0)
+}
+
 func TestNormalizeURLPath(t *testing.T) {
 	tests := []struct {
 		ourl         string
@@ -26,11 +47,11 @@ func TestNormalizeURLPath(t *testing.T) {
 		wantErr      bool
 		msg          string
 	}{
-		{"/film/everything-everywhere-all-at-once/", "/film/everything-everywhere-all-at-once", false, "no trailing slash"},
-		{"/film/everything-everywhere-all-at-once", "/film/everything-everywhere-all-at-once", false, "trailing slash"},
-		{"https://letterboxd.com/film/everything-everywhere-all-at-once/", "/film/everything-everywhere-all-at-once", false, "bare hostname"},
-		{"https://www.letterboxd.com/film/everything-everywhere-all-at-once/", "/film/everything-everywhere-all-at-once", false, "www hostname"},
-		{"https://www.google.com/film/everything-everywhere-all-at-once/", "", true, "invalid hostname"},
+		{ourl: "/film/everything-everywhere-all-at-once/", expectedPath: "/film/everything-everywhere-all-at-once", wantErr: false, msg: "no trailing slash"},
+		{ourl: "/film/everything-everywhere-all-at-once", expectedPath: "/film/everything-everywhere-all-at-once", wantErr: false, msg: "trailing slash"},
+		{ourl: "https://letterboxd.com/film/everything-everywhere-all-at-once/", expectedPath: "/film/everything-everywhere-all-at-once", wantErr: false, msg: "bare hostname"},
+		{ourl: "https://www.letterboxd.com/film/everything-everywhere-all-at-once/", expectedPath: "/film/everything-everywhere-all-at-once", wantErr: false, msg: "www hostname"},
+		{ourl: "https://www.google.com/film/everything-everywhere-all-at-once/", expectedPath: "", wantErr: true, msg: "invalid hostname"},
 	}
 	for _, tt := range tests {
 		path, err := normalizeURLPath(tt.ourl)

@@ -27,13 +27,12 @@ func (u *URLServiceOp) Items(ctx context.Context, lurl string) (interface{}, err
 		return nil, err
 	}
 	// Check if this is a filmography first
-	professions := GetFilmographyProfessions()
-	for _, profession := range professions {
+	for _, profession := range Professions {
 		if strings.HasPrefix(path, fmt.Sprintf("/%v/", profession)) {
-			actor := strings.Split(path, "/")[2]
+			person := strings.Split(path, "/")[2]
 			items, err := u.client.Film.Filmography(ctx, &FilmographyOpt{
 				Profession: profession,
-				Person:     actor,
+				Person:     person,
 			})
 			if err != nil {
 				return nil, err
@@ -42,9 +41,9 @@ func (u *URLServiceOp) Items(ctx context.Context, lurl string) (interface{}, err
 		}
 	}
 	// Handle Watchlist
-	if strings.HasSuffix(path, "/watchlist") {
+	if strings.Contains(path, "/watchlist") {
 		user := strings.Split(path, "/")[1]
-		items, _, err := u.client.User.WatchList(context.Background(), user)
+		items, _, err := u.client.User.WatchList(context.TODO(), user)
 		if err != nil {
 			return nil, err
 		}

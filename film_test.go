@@ -106,7 +106,7 @@ func TestStreamBatchWithChan(t *testing.T) {
 	go sc.Film.StreamBatch(context.TODO(), &FilmBatchOpts{
 		Watched: []string{"someguy"},
 		List: []*ListID{
-			{"dave", "official-top-250-narrative-feature-films"},
+			{User: "dave", Slug: "official-top-250-narrative-feature-films"},
 		},
 		WatchList: []string{"someguy"},
 	}, watchedC, errorC)

@@ -44,10 +44,14 @@ func setup() {
 			FileToResponseWriter(fmt.Sprintf("testdata/list/lists-page-%v.html", pageNo), w)
 		case strings.HasPrefix(r.URL.Path, "/films/ajax/popular/size/"):
 			FileToResponseWriter("testdata/films/popular.html", w)
+		case strings.HasPrefix(r.URL.Path, "/singleguy/films"):
+			FileToResponseWriter("testdata/user/films-single.html", w)
 		case strings.HasPrefix(r.URL.Path, "/film/"):
 			FileToResponseWriter("testdata/film/sweetback.html", w)
 		case strings.Contains(r.URL.Path, "/actor/nicolas-cage"):
 			FileToResponseWriter("testdata/filmography/actor/nicolas-cage.html", w)
+		case strings.Contains(r.URL.Path, "singleguy/watchlist"):
+			FileToResponseWriter("testdata/user/watchlist-single.html", w)
 		case strings.Contains(r.URL.Path, "/someguy/films/page/"):
 			pageNo := strings.Split(r.URL.Path, "/")[4]
 			FileToResponseWriter(fmt.Sprintf("testdata/user/watched-paginated/%v.html", pageNo), w)

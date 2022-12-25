@@ -1,0 +1,958 @@
+
+
+<!DOCTYPE html>
+
+<!--[if lt IE 7 ]> <html lang="en" class="ie6 lte9 lte8 lte7 lte6 no-js"> <![endif]-->
+<!--[if IE 7 ]>    <html lang="en" class="ie7 lte9 lte8 lte7 no-js"> <![endif]-->
+<!--[if IE 8 ]>    <html lang="en" class="ie8 lte9 lte8 no-js"> <![endif]-->
+<!--[if IE 9 ]>    <html lang="en" class="ie9 lte9 no-js"> <![endif]-->
+<!--[if (gt IE 9)|!(IE)]><!--> <html id="html" lang="en" class="no-mobile no-js"> <!--<![endif]-->
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=1024" />
+	<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+	<meta name="description" content="jstinnett’s films" />
+	
+	
+	<meta property="og:url" content="https://letterboxd.com/jstinnett/films/" />
+	<meta property="og:title" content="jstinnett’s films" />
+	<meta property="og:description" content="jstinnett’s films" />
+	<meta property="og:image" content="https://s.ltrbxd.com/static/img/default-share.e38c5d62.png" />
+	
+	<meta name="application-name" content="Letterboxd" />
+	<meta name="theme-color" content="#445566" />
+	<meta name="msapplication-TileColor" content="#445566" />
+	<meta name="apple-itunes-app" content="app-id=1054271011, affiliate-data=11l5KW, app-argument=https://letterboxd.com/jstinnett/films/" />
+	<meta name="mobile-web-app-capable" content="yes" />
+
+	<title>&lrm;jstinnett’s films &bull; Letterboxd</title>
+	
+	<script>
+		window.dataLayer = window.dataLayer || [];
+		window.gtag = window.gtag || function () {
+			dataLayer.push(arguments);
+		};
+		function ga() {}
+
+		// Default consent to 'denied'.
+		gtag('consent', 'default', {
+			'analytics_storage': 'denied',
+			'ad_storage': 'denied',
+		});
+	</script>
+
+	<script async src="https://www.googletagmanager.com/gtag/js?id=G-D3ECBB4D7L"></script>
+
+	<script>
+		window.dataLayer = window.dataLayer || [];
+		window.gtag = window.gtag || function () {
+			dataLayer.push(arguments);
+		};
+		gtag('js', new Date());
+	
+		var analytic_params = {};
+		
+		
+		analytic_params['user_type'] = 'Visitor';
+		analytic_params['template'] = '/object/person/films-watched';
+		
+		
+
+		if (analytic_params.member_type) {
+			gtag('set', 'user_properties', { 
+				member_type: analytic_params.member_type,
+			});
+			delete analytic_params.member_type;
+		}
+		var config = {
+			...analytic_params,
+			'cookie_domain': 'letterboxd.com', 
+			'optimize_id': 'GTM-TB8HSDN', 
+		};
+		gtag('config', 'G-D3ECBB4D7L', config);
+	</script>
+
+
+	<script>
+		var isMobile = false,
+			isMobileOptimised = true,
+			renderMobile = false,
+			useStaticFonts = false,
+			disableFrameProtection = false,
+			baseURL = "",
+			successMessages = [],
+			errorMessages = [],
+			stickyMessages = [],
+			globals = {
+			autoAddFilm: false			
+				, spinners: {
+					ajax_242d35: 'https://s.ltrbxd.com/static/img/spinner-dark-2x.fda24f88.gif',
+					spinner_12_2C3641: 'https://s.ltrbxd.com/static/img/spinner-dark-2x.fda24f88.gif',
+					spinner_14_20272f: 'https://s.ltrbxd.com/static/img/spinner-dark-2x.fda24f88.gif',
+					spinner_16_161B21: 'https://s.ltrbxd.com/static/img/spinner-dark-2x.fda24f88.gif'
+				}
+			},
+			supermodelCSRF = "",
+			gRecaptchaKey = '6Le3mMIUAAAAAEXbwZ7M1R5jEv0V5xbvj7bgXq2g',
+			person = {
+				username: ""
+				, loggedIn: false
+				
+				, showAds: true
+				, role: "guest"
+				, hasExtendedServiceFilters: false
+				, canBulkAddToLists: false
+				, canFilterOwned: false
+				, hasHqRole: false
+				, canHaveHqDashboard: false
+				, hasMemberStatistics: false
+				, blockedMembers: []
+				, showAdultContent: false
+				, validated: null
+				, trusted: false
+				, hasBlocked : function(member) { for (var i = 0; i !== person.blockedMembers.length; i++) {if (person.blockedMembers[i] === member) return true;} return false; }
+				, viewingTags: []
+				, hasMoreTags: true
+				, getCustomPoster : function(filmId) { return null; }
+			},
+			disableAds = false;
+		
+		
+		
+supermodelCSRF = "afc5ba9ab2f0769d74d8";
+
+		
+
+		
+
+		
+
+		
+			if ( screen.width < 768 ) {
+				var date = new Date();
+				var maxAge = 365 * 24 * 60 * 60;
+				date.setTime(date.getTime() + maxAge * 1000);
+				var expires = '; expires=' + date.toUTCString();
+				document.cookie = "useMobileSite=yes" + expires + "; path=/; maxAge=" + maxAge;
+				if ( document.cookie && document.cookie.indexOf("useMobileSite=yes") >= 0 ) {
+					window.location.reload(true);
+				} else {
+					// No cookies.  No Mobile version.
+				}
+			}
+		
+
+		var isWindows = navigator.platform.toUpperCase().indexOf('WIN') >= 0; // Detect windows platform
+		if (isWindows) { document.documentElement.classList.add('is-windows'); }
+	</script>
+
+	
+	
+
+
+
+
+
+	
+	
+	<script>
+		window.ramp = window.ramp || {};
+		window.ramp.que = window.ramp.que || [];
+		window.ramp.passiveMode = false; 
+		window.ramp.forcePath = '';
+		window.ramp.custom_tags = [
+			'', 
+			'', 
+			'intl_true', 
+			'', 
+			'' 
+		];
+	</script>
+	<script src="//cdn.intergient.com/1024338/72804/ramp_config.js"></script>
+	<script>
+		window._pwGA4PageviewId = ''.concat(Date.now());
+		window.dataLayer = window.dataLayer || [];
+		window.gtag = window.gtag || function () { 
+			dataLayer.push(arguments);
+		};
+		gtag('js', new Date());
+		gtag('config', 'G-L0W7RDZXX3', { 'send_page_view': false });
+		gtag(
+			'event',
+			'ramp_js',
+			{
+				'send_to': 'G-L0W7RDZXX3',
+				'pageview_id': window._pwGA4PageviewId
+			}
+		);
+	</script>
+
+
+
+	<link rel="manifest" href="/manifest.json" />
+	<link rel="author" type="text/plain" href="/humans.txt" />
+	<link rel="mask-icon" href="https://s.ltrbxd.com/static/img/icons/letterboxd-decal-l-16px.5fe24c7d.svg" color="#445566" />
+	<link rel="shortcut icon" sizes="196x196" href="https://s.ltrbxd.com/static/img/icons/touch-icon-192x192.257b84e7.png" />
+	<link rel="shortcut icon" href="/favicon.ico" />
+	<link rel="search" type="application/opensearchdescription+xml" title="Letterboxd" href="/static/opensearch.xml" />
+	
+	
+	<!--[if lte IE 9 ]>
+		<link href="https://s.ltrbxd.com/static/css/ie9-1.min.67981e08.css" rel="stylesheet" media="screen, projection"/>
+		<link href="https://s.ltrbxd.com/static/css/ie9-2.min.77a6cdf6.css" rel="stylesheet" media="screen, projection"/>
+	<![endif]-->
+	<!--[if (gt IE 9)|!(IE)]><!-->
+		<link href="https://s.ltrbxd.com/static/css/main.min.670903b3.css" rel="stylesheet" media="screen, projection"/>
+	<!--<![endif]-->
+	<!--[if lte IE 6]><script>location.replace("/errors/ie6");</script><![endif]-->
+	<!--[if IE 7]><script>location.replace("/errors/ie7");</script><![endif]-->
+	<!--[if IE 8]><script>location.replace("/errors/ie8");</script><![endif]-->
+	<!--[if IE 9]><script>location.replace("/errors/ie9");</script><![endif]-->
+	
+	
+	
+	<link href="https://s.ltrbxd.com/static/css/desktop.min.1c7835d9.css" rel="stylesheet" media="screen, projection"/>
+
+	<script src="https://s.ltrbxd.com/static/js/main.min.895309f9.js"></script>
+	
+
+
+
+
+
+	<script>
+		if ( $.cookie("letterboxd.admin.signed.in") === person.username ) {
+			successMessages.push("You are signed in as " + person.username);
+			$(function(){$("#header, #content, body").css("background","#543");});
+		}
+	</script>
+	
+</head>
+
+<body class="films-watched wide small-poster-grid" data-owner="jstinnett">
+	
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<script>
+var mainMenu = [];
+
+	
+	mainMenu.push({
+		"id": 1,
+		"url": "/sign-in/", 
+		"name": "Sign In",
+		"cssClassCode": "sign-in-menu",
+		"hideWhenSignedIn": true,
+		"hideWhenNotSignedIn": false,
+		"showInMainNavForMobile": true,
+		"tooltip": "",
+		"selected": false
+	});
+
+	
+	mainMenu.push({
+		"id": 2,
+		"url": "/create-account/", 
+		"name": "Create Account",
+		"cssClassCode": "create-account-menu",
+		"hideWhenSignedIn": true,
+		"hideWhenNotSignedIn": false,
+		"showInMainNavForMobile": false,
+		"tooltip": "",
+		"selected": false
+	});
+
+	
+	mainMenu.push({
+		"id": 3,
+		"url": "/", 
+		"name": "Home",
+		"cssClassCode": "person-home",
+		"hideWhenSignedIn": true,
+		"hideWhenNotSignedIn": true,
+		"showInMainNavForMobile": false,
+		"tooltip": "",
+		"selected": false
+	});
+
+	
+	mainMenu.push({
+		"id": 4,
+		"url": "/activity/", 
+		"name": "Activity",
+		"cssClassCode": "main-nav-activity",
+		"hideWhenSignedIn": false,
+		"hideWhenNotSignedIn": true,
+		"showInMainNavForMobile": false,
+		"tooltip": "Activity",
+		"selected": false
+	});
+
+	
+	mainMenu.push({
+		"id": 5,
+		"url": "/films/", 
+		"name": "Films",
+		"cssClassCode": "films-page main-nav-films",
+		"hideWhenSignedIn": false,
+		"hideWhenNotSignedIn": false,
+		"showInMainNavForMobile": false,
+		"tooltip": "",
+		"selected": false
+	});
+
+	
+	mainMenu.push({
+		"id": 6,
+		"url": "/lists/", 
+		"name": "Lists",
+		"cssClassCode": "lists-page main-nav-lists",
+		"hideWhenSignedIn": false,
+		"hideWhenNotSignedIn": false,
+		"showInMainNavForMobile": false,
+		"tooltip": "",
+		"selected": false
+	});
+
+	
+	mainMenu.push({
+		"id": 7,
+		"url": "/members/", 
+		"name": "Members",
+		"cssClassCode": "main-nav-people",
+		"hideWhenSignedIn": false,
+		"hideWhenNotSignedIn": false,
+		"showInMainNavForMobile": false,
+		"tooltip": "",
+		"selected": false
+	});
+
+	
+	mainMenu.push({
+		"id": 8,
+		"url": "/journal/", 
+		"name": "Journal",
+		"cssClassCode": "main-nav-journal",
+		"hideWhenSignedIn": false,
+		"hideWhenNotSignedIn": false,
+		"showInMainNavForMobile": false,
+		"tooltip": "",
+		"selected": false
+	});
+
+	
+	mainMenu.push({
+		"id": 9,
+		"url": "/search/", 
+		"name": "Search results",
+		"cssClassCode": "",
+		"hideWhenSignedIn": true,
+		"hideWhenNotSignedIn": true,
+		"showInMainNavForMobile": false,
+		"tooltip": "",
+		"selected": false
+	});
+
+</script>
+
+<header class="site-header js-hide-in-app" id="header" data-allow-user-to-add-all-films-to-a-list="true">
+	<div class="site-header-bg"></div>
+	<section>
+		<h1 class="site-logo"><a href="/" class="logo replace">Letterboxd &mdash; Your life in film</a></h1>
+
+		<div class="react-component" data-component-class="globals.comps.NavComponent"></div>
+
+		
+			
+			
+
+
+	
+
+
+
+
+
+<form method="post" action="#" id="signin" class="signin signin-form js-header-signin-form js-signin" data-url="/user/login.do" data-recaptcha-action="signin" novalidate='novalidate' autocorrect='off' autocapitalize='off'>
+	<input type="hidden" name="__csrf" value="placeholder" />
+	<fieldset class="fieldset">
+		<div class="fields">
+			<div class="col">
+				<label for="username">Username or Email</label>
+				<input type="email" name="username" id="username" class="field signin-field" tabindex="1" data-focus-control="signingIn" autocomplete='email' inputmode='email' value="" />
+			</div>
+			<div class="col">
+				<label for="password">Password</label>
+				<input type="password" name="password" id="password" class="field signin-field" tabindex="2" autocomplete='current-password' value="" />
+			</div>
+			<div class="signin-actions">
+				<label for="remember" class="option-label -checkbox -small">
+					<input type="checkbox" name="remember" id="remember" class="checkbox" tabindex="3" value="true" /><i class="substitute"></i>
+					<span class="focus">Remember<span class="mob-hide"> me</span></span>
+				</label>
+				<p class="reset" tabindex="5"><a class="reset-password-link" href="/user/request-password-reset" target="_top">Forgotten<span class="elongated"> password</span>?</a></p>
+			</div>
+			<div class="col buttons">
+				<div class="button-container"><input type="submit" value="Sign in" class="button -action button-green" tabindex="4" /><i></i></div>
+				<div class="close js-close-signin">&times;</div>
+			</div>
+		</div>
+	</fieldset>
+	<div id="signin-message" class="errormessage"></div>
+</form>
+
+
+		
+		
+		
+			
+			
+
+
+		
+		
+		
+		<form id="search" class="js-search-form search-form" action="/search/" method="get" autocorrect="off">
+			<input autocomplete="false" name="hidden" type="text" style="display:none;" />
+			<fieldset>
+				<label for="search-q" class="hidden">Search:</label>
+				<input type="text" name="q" id="search-q" class="field -borderless" data-lpignore='true' inputmode='search' value="" />
+				<input type="submit" value="Search" class="action" />
+			</fieldset>
+		</form>
+		
+	</section>
+</header>
+
+
+
+
+
+
+<div id="content" class="site-body">
+	
+	<div class="content-wrap">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<section id="profile-header" class="js-profile-header -is-mini-nav" data-person="jstinnett">
+	
+
+	<nav class="profile-navigation">
+		
+			<div class="profile-mini-person">
+				<a class="avatar -a24" href="/jstinnett/" > <img src="https://secure.gravatar.com/avatar/09921f622afec4b4dd8bc16eecbca13f?rating=PG&amp;size=48&amp;border=&amp;default=https%3A%2F%2Fs.ltrbxd.com%2Fstatic%2Fimg%2Favatar48.7a758b1e.png" alt="jstinnett" width="24" height="24" /> </a>
+				<h1 class="title-3"><a href="/jstinnett/">jstinnett</a></h1>
+				
+			</div>
+		
+		
+			<ul class="navlist">
+				
+
+				
+
+				<li data-owner="jstinnett" class="navitem hide-for-owner"><a class="navlink" href="/jstinnett/activity/">Activity</a></li>
+				<li data-owner="jstinnett" class="navitem show-for-owner"><a class="navlink" href="/activity/">Activity</a></li>
+
+				<li data-owner="jstinnett" class="navitem -active"><a class="navlink" href="/jstinnett/films/">Films</a></li>
+
+				<li data-owner="jstinnett" class="navitem"><a class="navlink" href="/jstinnett/films/diary/">Diary</a></li>
+
+				<li data-owner="jstinnett" class="navitem"><a class="navlink" href="/jstinnett/films/reviews/">Reviews</a></li>
+
+				<li class="navitem" data-owner="jstinnett"><a class="navlink" href="/jstinnett/watchlist/" >Watchlist</a></li>
+
+				<li data-owner="jstinnett" class="navitem show-for-owner"><a class="navlink" href="/jstinnett/lists/">Lists</a></li>
+
+				<li data-owner="jstinnett" class="navitem"><a class="navlink" href="/jstinnett/likes/">Likes</a></li>
+
+				<li data-owner="jstinnett" class="navitem show-for-owner"><a class="navlink" href="/jstinnett/tags/">Tags</a></li>
+
+				<li data-owner="jstinnett" class="navitem"><a class="navlink" href="/jstinnett/following/">Network</a></li>
+
+				
+
+				
+
+				
+
+
+
+	<li data-owner="jstinnett" class="navitem show-when-logged-in hide-for-owner"><a class="navlink" href="/pro/gift/jstinnett/">Gift Pro</a></li>
+
+
+				<li class="navitem -rss">
+					<a href="/jstinnett/rss/" class="has-icon icon-16 icon-rss tooltip" title="RSS feed">
+						<span class="_sr-only">RSS feed for jstinnett</span>
+					</a>
+				</li>
+			</ul>
+		
+    </nav>
+</section>
+
+
+ 
+
+
+
+<div class="cols-2 overflow">
+	<section class="section col-main overflow">
+	
+ 		
+
+<div id="content-nav" class="tabbed"> <section class="sub-nav-wrapper"><ul class="sub-nav"> <li class=" selected"><a href="/jstinnett/films/" class="tooltip" title="50&nbsp;films">Watched</a></li> <li class=""><a href="/jstinnett/films/diary/" class="tooltip" title="29&nbsp;films">Diary</a></li> <li class=""><a href="/jstinnett/films/reviews/" class="tooltip" title="29&nbsp;films">Reviews</a></li> </ul></section> <div class="sorting-selects has-hide-toggle"> <section class="grid-toggle-menu mob-hide"> <ul> <li class="selected"><a href="/jstinnett/films/" class="grid-toggle ir s grid-toggle-small" data-toggle="large">Small</a></li> <li><a href="/jstinnett/films/size/large/" class="grid-toggle ir s grid-toggle-large" data-toggle="small">Large</a></li> </ul> </section> <section class="smenu-wrapper hide-toggle-menu"> <div class="smenu"> <label><span class="ir s hide-toggle-icon">Visibility Filters</span><i class="ir s icon"></i></label> <ul class="smenu-menu" id="hide-toggle-menu"> <li class="divider-line-below"><a href="#" class="item js-film-filter-remover">Remove filters</a></li> <li class="js-account-filters"> <label class="option-label -toggle -small switch-control js-fade-toggle"> <span class="label">Fade watched films</span> <input class="checkbox" type="checkbox" checked="checked" role="switch" /><span class="state"><span class="track"><span class="handle"></span></span></span> </label> </li> <li class="js-account-filters"> <label class="option-label -toggle -small switch-control js-custom-poster-toggle" data-action="/ajax/poster-mode/"> <span class="label">Show custom posters</span> <input class="checkbox" type="checkbox" checked="checked" role="switch" /><span class="state"><span class="track"><span class="handle"></span></span></span> </label> </li> <li class="divider-line js-account-filters"> <span class="smenu-sublabel -uppercase">Custom posters</span> <div class="segmented-control -small custom-poster-control js-custom-poster-control" role="group" aria-label="Change custom poster visibility" data-action="/ajax/poster-mode/"> <div class="options"> <button type="button" class="option" data-js-trigger="option" data-value="All">Any</button> <button type="button" class="option" data-js-trigger="option" data-value="Theirs">Theirs</button> <button type="button" class="option" data-js-trigger="option" data-value="Yours">Yours</button> <button type="button" class="option" data-js-trigger="option" data-value="None">None</button> </div> </div> </li> <li class="divider-line js-account-filters"> <span class="smenu-sublabel -uppercase">Account Filters</span> <ul> <li class="js-film-filter" data-category="watched" data-type="show"><a class="item" href="#"><i class="ir s icon"></i>Show watched films</a></li> <li class="js-film-filter" data-category="watched" data-type="hide"><a class="item" href="#"><i class="ir s icon"></i>Hide watched films</a></li> <li class="js-film-filter divider-line -inset" data-category="liked" data-type="show"><a class="item" href="#"><i class="ir s icon"></i>Show liked films</a></li> <li class="js-film-filter" data-category="liked" data-type="hide"><a class="item" href="#"><i class="ir s icon"></i>Hide liked films</a></li> <li class="js-film-filter divider-line -inset" data-category="rated" data-type="show"><a class="item" href="#"><i class="ir s icon"></i>Show rated films</a></li> <li class="js-film-filter" data-category="rated" data-type="hide"><a class="item" href="#"><i class="ir s icon"></i>Hide rated films</a></li> <li class="js-film-filter divider-line -inset" data-category="logged" data-type="show"><a class="item" href="#"><i class="ir s icon"></i>Show logged films</a></li> <li class="js-film-filter" data-category="logged" data-type="hide"><a class="item" href="#"><i class="ir s icon"></i>Hide logged films</a></li> <li class="js-film-filter divider-line -inset" data-category="rewatched" data-type="show"><a class="item" href="#"><i class="ir s icon"></i>Show rewatched films</a></li> <li class="js-film-filter" data-category="rewatched" data-type="hide"><a class="item" href="#"><i class="ir s icon"></i>Hide rewatched films</a></li> <li class="js-film-filter divider-line -inset" data-category="reviewed" data-type="show"><a class="item" href="#"><i class="ir s icon"></i>Show reviewed films</a></li> <li class="js-film-filter" data-category="reviewed" data-type="hide"><a class="item" href="#"><i class="ir s icon"></i>Hide reviewed films</a></li> <li class="js-film-filter divider-line -inset" data-category="watchlisted" data-type="show"><a class="item" href="#"><i class="ir s icon"></i>Show films in watchlist</a></li> <li class="js-film-filter" data-category="watchlisted" data-type="hide"><a class="item" href="#"><i class="ir s icon"></i>Hide films in watchlist</a></li> <li class="js-film-filter divider-line -inset" data-category="owned" data-type="show"><a class="item" href="#"><i class="ir s icon"></i>Show films you own</a></li> <li class="js-film-filter" data-category="owned" data-type="hide"><a class="item" href="#"><i class="ir s icon"></i>Hide films you own</a></li> <li class="js-film-filter divider-line -inset" data-category="customised" data-type="show"><a class="item" href="#"><i class="ir s icon"></i>Show films you’ve customized</a></li> <li class="js-film-filter" data-category="customised" data-type="hide"><a class="item" href="#"><i class="ir s icon"></i>Hide films you’ve customized</a></li> </ul> </li> <li class="divider-line js-film-filters"> <span class="smenu-sublabel -uppercase">Content Filters</span> <ul> <li class="js-film-filter" data-category="shorts" data-type="show"><a class="item" href="#"><i class="ir s icon"></i>Show short films</a></li> <li class="js-film-filter" data-category="shorts" data-type="hide"><a class="item" href="#"><i class="ir s icon"></i>Hide short films</a></li> <li class="js-film-filter divider-line -inset" data-category="tv" data-type="show"><a class="item" href="#"><i class="ir s icon"></i>Show TV shows</a></li> <li class="js-film-filter" data-category="tv" data-type="hide"><a class="item" href="#"><i class="ir s icon"></i>Hide TV shows</a></li> <li class="js-film-filter divider-line -inset" data-category="docs" data-type="hide"><a class="item" href="#"><i class="ir s icon"></i>Hide documentaries</a></li> <li class="js-film-filter divider-line -inset" data-category="unreleased" data-type="hide"><a class="item" href="#"><i class="ir s icon"></i>Hide unreleased titles</a></li> <li class="js-film-filter divider-line -inset" data-category="obscure" data-type="show"><a class="item" href="#"><i class="ir s icon"></i>Show obscure films</a></li> <li class="js-film-filter" data-category="obscure" data-type="hide"><a class="item" href="#"><i class="ir s icon"></i>Hide obscure films</a></li> <li class="js-film-filter divider-line -inset" data-category="nanocrowd" data-type="show"><a class="item" href="#"><i class="ir s icon"></i>Show Nanocrowd films</a></li> <li class="js-film-filter" data-category="nanocrowd" data-type="hide"><a class="item" href="#"><i class="ir s icon"></i>Hide Nanocrowd films</a></li> </ul> </li> </ul> </div> </section> <section class="smenu-wrapper"> <strong class="smenu-label">Sort by</strong> <div class="smenu"> <label>Release Date<i class="ir s icon"></i></label> <ul class="smenu-menu"> <li class=""><a class="item" href="/jstinnett/films/by/name/">Film Name</a></li> <li class=""><a class="item" href="/jstinnett/films/by/popular/">Film Popularity</a></li> <li class=""><a class="item" href="/jstinnett/films/by/shuffle/">Shuffle</a></li> <li class=""><span class="smenu-sublabel">When Added</span> <ul> <li class=""><a class="item" href="/jstinnett/films/by/date/">Newest First</a></li> <li class=""><a class="item" href="/jstinnett/films/by/date-earliest/">Earliest First</a></li> </ul></li> <li class=""><span class="smenu-sublabel">When Rated</span> <ul> <li class=""><a class="item" href="/jstinnett/films/by/rated-date/">Newest First</a></li> <li class=""><a class="item" href="/jstinnett/films/by/rated-date-earliest/">Earliest First</a></li> </ul></li> <li class=""><span class="smenu-sublabel">Release Date</span> <ul> <li class=" smenu-subselected"><a class="item" href="/jstinnett/films/"><i class="ir s icon"></i>Newest First</a></li> <li class=""><a class="item" href="/jstinnett/films/by/release-earliest/">Earliest First</a></li> </ul></li> <li class=""><span class="smenu-sublabel">Average Rating</span> <ul> <li class=""><a class="item" href="/jstinnett/films/by/rating/">Highest First</a></li> <li class=""><a class="item" href="/jstinnett/films/by/rating-lowest/">Lowest First</a></li> </ul></li> <li class="" data-owner="jstinnett"><span class="smenu-sublabel" data-owner="jstinnett" data-owner-label="Your Rating">jstinnett’s Rating</span> <ul> <li class=""><a class="item" href="/jstinnett/films/by/entry-rating/">Highest First</a></li> <li class=""><a class="item" href="/jstinnett/films/by/entry-rating-lowest/">Lowest First</a></li> </ul></li> <li class=" show-when-logged-in hide-for-owner" data-owner="jstinnett"><span class="smenu-sublabel">Your Rating</span> <ul> <li class=" show-when-logged-in hide-for-owner" data-owner="jstinnett"><a class="item" href="/jstinnett/films/by/your-rating/">Highest First</a></li> <li class=" show-when-logged-in hide-for-owner" data-owner="jstinnett"><a class="item" href="/jstinnett/films/by/your-rating-lowest/">Lowest First</a></li> </ul></li> <li class=" show-when-logged-in"><span class="smenu-sublabel">Your Interests</span> <ul> <li class=" show-when-logged-in"><a class="item" href="/jstinnett/films/by/your-interest-liked/">Based on films you liked</a></li> <li class=" show-when-logged-in"><a class="item" href="/jstinnett/films/by/your-interest-related/">Related to films you liked</a></li> </ul></li> <li class=""><span class="smenu-sublabel">Film Length</span> <ul> <li class=""><a class="item" href="/jstinnett/films/by/shortest/">Shortest First</a></li> <li class=""><a class="item" href="/jstinnett/films/by/longest/">Longest First</a></li> </ul></li> </ul> </div> </section> 
+<section class="smenu-wrapper"> <div class="smenu"> <label>Service<i class="ir s icon"></i></label> <ul id="services-menu" class="smenu-menu" data-upgrade-url="/pro/"> <li class="availability- smenu-subselected"> <span class="selected"> All films </span> </li> <li class="divider-line availability-fandango"> <a class="item" href="/jstinnett/films/on/fandango-us/"> Fandango US </a> </li> <li class="availability-amazon"> <a class="item" href="/jstinnett/films/on/amazon-usa/"> Amazon US </a> </li> <li class="availability-amazon-video"> <a class="item" href="/jstinnett/films/on/amazon-video-us/"> Amazon Video US </a> </li> <li class="availability-apple-itunes"> <a class="item" href="/jstinnett/films/on/apple-itunes-us/"> iTunes US </a> </li> <li class="note divider-line -upgrade"> <p>Upgrade to a <a href="/pro/">Letterboxd <span class="badge -pro -small">Pro</span></a> account to add your favorite services to this list—including any service and country pair listed on JustWatch—and to enable one-click filtering by all your favorites.</p></li> <li><a class="item item-small" href="https://www.justwatch.com" target="_blank" rel="noopener noreferrer"><small>Powered by JustWatch</small></a></li> </ul> </div> </section>
+ <section class="smenu-wrapper"> <div class="smenu"> <label> Genre<i class="ir s icon"></i> </label> <ul class="smenu-menu"> <li class="smenu-subselected"><span class="selected">Any genre</span></li> <li class="divider-line"> <ul> <li class=""><a class="item" href="/jstinnett/films/genre/action/"><i class="ir s icon"></i>Action</a></li> <li class=""><a class="item" href="/jstinnett/films/genre/adventure/"><i class="ir s icon"></i>Adventure</a></li> <li class=""><a class="item" href="/jstinnett/films/genre/animation/"><i class="ir s icon"></i>Animation</a></li> <li class=""><a class="item" href="/jstinnett/films/genre/comedy/"><i class="ir s icon"></i>Comedy</a></li> <li class=""><a class="item" href="/jstinnett/films/genre/crime/"><i class="ir s icon"></i>Crime</a></li> <li class=""><a class="item" href="/jstinnett/films/genre/documentary/"><i class="ir s icon"></i>Documentary</a></li> <li class=""><a class="item" href="/jstinnett/films/genre/drama/"><i class="ir s icon"></i>Drama</a></li> <li class=""><a class="item" href="/jstinnett/films/genre/family/"><i class="ir s icon"></i>Family</a></li> <li class=""><a class="item" href="/jstinnett/films/genre/fantasy/"><i class="ir s icon"></i>Fantasy</a></li> <li class=""><a class="item" href="/jstinnett/films/genre/history/"><i class="ir s icon"></i>History</a></li> <li class=""><a class="item" href="/jstinnett/films/genre/horror/"><i class="ir s icon"></i>Horror</a></li> <li class=""><a class="item" href="/jstinnett/films/genre/music/"><i class="ir s icon"></i>Music</a></li> <li class=""><a class="item" href="/jstinnett/films/genre/mystery/"><i class="ir s icon"></i>Mystery</a></li> <li class=""><a class="item" href="/jstinnett/films/genre/romance/"><i class="ir s icon"></i>Romance</a></li> <li class=""><a class="item" href="/jstinnett/films/genre/science-fiction/"><i class="ir s icon"></i>Science Fiction</a></li> <li class=""><a class="item" href="/jstinnett/films/genre/thriller/"><i class="ir s icon"></i>Thriller</a></li> <li class=""><a class="item" href="/jstinnett/films/genre/tv-movie/"><i class="ir s icon"></i>TV Movie</a></li> <li class=""><a class="item" href="/jstinnett/films/genre/war/"><i class="ir s icon"></i>War</a></li> <li class=""><a class="item" href="/jstinnett/films/genre/western/"><i class="ir s icon"></i>Western</a></li> </ul> </li> </ul> </div> </section> <section class="smenu-wrapper"> <div class="smenu"> <label class="x"> Decade<i class="ir s icon"></i> </label> <ul class="smenu-menu"> <li class="smenu-subselected"><span class="selected">Any decade</span></li> <li class="divider-line "><a class="item" href="/jstinnett/films/decade/2020s/">2020s</a></li> <li class=""><a class="item" href="/jstinnett/films/decade/2010s/">2010s</a></li> <li class=""><a class="item" href="/jstinnett/films/decade/2000s/">2000s</a></li> <li class=""><a class="item" href="/jstinnett/films/decade/1990s/">1990s</a></li> <li class=""><a class="item" href="/jstinnett/films/decade/1980s/">1980s</a></li> <li class=""><a class="item" href="/jstinnett/films/decade/1970s/">1970s</a></li> <li class=""><a class="item" href="/jstinnett/films/decade/1960s/">1960s</a></li> <li class=""><a class="item" href="/jstinnett/films/decade/1950s/">1950s</a></li> <li class=""><a class="item" href="/jstinnett/films/decade/1940s/">1940s</a></li> <li class=""><a class="item" href="/jstinnett/films/decade/1930s/">1930s</a></li> <li class=""><a class="item" href="/jstinnett/films/decade/1920s/">1920s</a></li> <li class=""><a class="item" href="/jstinnett/films/decade/1910s/">1910s</a></li> <li class=""><a class="item" href="/jstinnett/films/decade/1900s/">1900s</a></li> <li class=""><a class="item" href="/jstinnett/films/decade/1890s/">1890s</a></li> <li class=""><a class="item" href="/jstinnett/films/decade/1880s/">1880s</a></li> <li class=""><a class="item" href="/jstinnett/films/decade/1870s/">1870s</a></li> </ul> </div> </section> <section class="smenu-wrapper"> <div class="smenu"> <label> Rating <i class="ir s icon"></i> </label> <ul class="smenu-menu"> <li class="smenu-subselected"><a class="item" href="/jstinnett/films/">Any rating</a></li> <li><a class="item" href="/jstinnett/films/rated/none/">No rating</a></li> <li class="divider-line"> <span class="smenu-sublabel -uppercase">Rating (or range)</span> <div class="menu-rating-filter js-rating-filter" data-rateit-starwidth="10" data-rateit-starheight="19" data-action="/jstinnett/films/rated/%7B%7Bvalue%7D%7D/"> <div class="rateit-range"> <div class="rateit-selected"></div> <div class="rateit-hover"></div> </div> </div> <small class="note">Drag to define range</small> </li> </ul> </div> </section> </div> <div class="clear"></div> </div>
+	
+		
+
+	
+		
+				
+
+				<ul class="poster-list -p70 -grid film-list clear">
+					
+						<li class="poster-container">
+							<div class="really-lazy-load poster film-poster film-poster-485309 linked-film-poster" data-image-width="70" data-image-height="105" data-film-id="485309" data-film-slug="/film/hamilton-2020/" data-linked="linked" data-target-link="/film/hamilton-2020/" data-target-link-target="" data-cache-busting-key="0352a180" data-show-menu="true" > <img src="https://s.ltrbxd.com/static/img/empty-poster-70.8112b435.png" class="image" width="70" height="105" alt="Hamilton"/> <span class="frame"><span class="frame-title"></span></span> </div> <p class="poster-viewingdata -rated-and-liked"> <span class="rating -tiny -darker rated-10">★★★★★</span> <span class="like has-icon icon-liked icon-16"><span class="icon"></span></span> </p>
+
+						</li>
+					
+						<li class="poster-container">
+							<div class="really-lazy-load poster film-poster film-poster-522603 linked-film-poster" data-image-width="70" data-image-height="105" data-film-id="522603" data-film-slug="/film/irresistible-2020/" data-linked="linked" data-target-link="/film/irresistible-2020/" data-target-link-target="" data-cache-busting-key="871f5a6d" data-show-menu="true" > <img src="https://s.ltrbxd.com/static/img/empty-poster-70.8112b435.png" class="image" width="70" height="105" alt="Irresistible"/> <span class="frame"><span class="frame-title"></span></span> </div> <p class="poster-viewingdata"> <span class="rating -tiny -darker rated-6">★★★</span> </p>
+
+						</li>
+					
+						<li class="poster-container">
+							<div class="really-lazy-load poster film-poster film-poster-609392 linked-film-poster" data-image-width="70" data-image-height="105" data-film-id="609392" data-film-slug="/film/tiger-king-murder-mayhem-and-madness/" data-linked="linked" data-target-link="/film/tiger-king-murder-mayhem-and-madness/" data-target-link-target="" data-cache-busting-key="0451a975" data-show-menu="true" > <img src="https://s.ltrbxd.com/static/img/empty-poster-70.8112b435.png" class="image" width="70" height="105" alt="Tiger King: Murder, Mayhem and Madness"/> <span class="frame"><span class="frame-title"></span></span> </div> <p class="poster-viewingdata -rated-and-liked"> <span class="rating -tiny -darker rated-8">★★★★</span> <span class="like has-icon icon-liked icon-16"><span class="icon"></span></span> </p>
+
+						</li>
+					
+						<li class="poster-container">
+							<div class="really-lazy-load poster film-poster film-poster-435176 linked-film-poster" data-image-width="70" data-image-height="105" data-film-id="435176" data-film-slug="/film/the-last-thing-he-wanted/" data-linked="linked" data-target-link="/film/the-last-thing-he-wanted/" data-target-link-target="" data-cache-busting-key="8990d9be" data-show-menu="true" > <img src="https://s.ltrbxd.com/static/img/empty-poster-70.8112b435.png" class="image" width="70" height="105" alt="The Last Thing He Wanted"/> <span class="frame"><span class="frame-title"></span></span> </div> <p class="poster-viewingdata"> <span class="rating -tiny -darker rated-6">★★★</span> </p>
+
+						</li>
+					
+						<li class="poster-container">
+							<div class="really-lazy-load poster film-poster film-poster-590397 linked-film-poster" data-image-width="70" data-image-height="105" data-film-id="590397" data-film-slug="/film/the-outsider-2020/" data-linked="linked" data-target-link="/film/the-outsider-2020/" data-target-link-target="" data-cache-busting-key="887bc96c" data-show-menu="true" > <img src="https://s.ltrbxd.com/static/img/empty-poster-70.8112b435.png" class="image" width="70" height="105" alt="The Outsider"/> <span class="frame"><span class="frame-title"></span></span> </div> <p class="poster-viewingdata"> <span class="rating -tiny -darker rated-6">★★★</span> </p>
+
+						</li>
+					
+						<li class="poster-container">
+							<div class="really-lazy-load poster film-poster film-poster-259441 linked-film-poster" data-image-width="70" data-image-height="105" data-film-id="259441" data-film-slug="/film/little-women-2019/" data-linked="linked" data-target-link="/film/little-women-2019/" data-target-link-target="" data-cache-busting-key="0146a18e" data-show-menu="true" > <img src="https://s.ltrbxd.com/static/img/empty-poster-70.8112b435.png" class="image" width="70" height="105" alt="Little Women"/> <span class="frame"><span class="frame-title"></span></span> </div> <p class="poster-viewingdata"> <span class="rating -tiny -darker rated-8">★★★★</span> </p>
+
+						</li>
+					
+						<li class="poster-container">
+							<div class="really-lazy-load poster film-poster film-poster-460155 linked-film-poster" data-image-width="70" data-image-height="105" data-film-id="460155" data-film-slug="/film/1917/" data-linked="linked" data-target-link="/film/1917/" data-target-link-target="" data-cache-busting-key="0f5f97c3" data-show-menu="true" > <img src="https://s.ltrbxd.com/static/img/empty-poster-70.8112b435.png" class="image" width="70" height="105" alt="1917"/> <span class="frame"><span class="frame-title"></span></span> </div> <p class="poster-viewingdata"> <span class="rating -tiny -darker rated-8">★★★★</span> </p>
+
+						</li>
+					
+						<li class="poster-container">
+							<div class="really-lazy-load poster film-poster film-poster-580092 linked-film-poster" data-image-width="70" data-image-height="105" data-film-id="580092" data-film-slug="/film/watchmen-2019/" data-linked="linked" data-target-link="/film/watchmen-2019/" data-target-link-target="" data-cache-busting-key="015780ee" data-show-menu="true" > <img src="https://s.ltrbxd.com/static/img/empty-poster-70.8112b435.png" class="image" width="70" height="105" alt="Watchmen"/> <span class="frame"><span class="frame-title"></span></span> </div> <p class="poster-viewingdata"> <span class="rating -tiny -darker rated-8">★★★★</span> </p>
+
+						</li>
+					
+						<li class="poster-container">
+							<div class="really-lazy-load poster film-poster film-poster-333203 linked-film-poster" data-image-width="70" data-image-height="105" data-film-id="333203" data-film-slug="/film/the-irishman-2019/" data-linked="linked" data-target-link="/film/the-irishman-2019/" data-target-link-target="" data-cache-busting-key="0fb37131" data-show-menu="true" > <img src="https://s.ltrbxd.com/static/img/empty-poster-70.8112b435.png" class="image" width="70" height="105" alt="The Irishman"/> <span class="frame"><span class="frame-title"></span></span> </div> <p class="poster-viewingdata -rated-and-liked"> <span class="rating -tiny -darker rated-10">★★★★★</span> <span class="like has-icon icon-liked icon-16"><span class="icon"></span></span> </p>
+
+						</li>
+					
+						<li class="poster-container">
+							<div class="really-lazy-load poster film-poster film-poster-464825 linked-film-poster" data-image-width="70" data-image-height="105" data-film-id="464825" data-film-slug="/film/downton-abbey/" data-linked="linked" data-target-link="/film/downton-abbey/" data-target-link-target="" data-cache-busting-key="0ba4443d" data-show-menu="true" > <img src="https://s.ltrbxd.com/static/img/empty-poster-70.8112b435.png" class="image" width="70" height="105" alt="Downton Abbey"/> <span class="frame"><span class="frame-title"></span></span> </div> <p class="poster-viewingdata"> <span class="rating -tiny -darker rated-4">★★</span> </p>
+
+						</li>
+					
+						<li class="poster-container">
+							<div class="really-lazy-load poster film-poster film-poster-475370 linked-film-poster" data-image-width="70" data-image-height="105" data-film-id="475370" data-film-slug="/film/knives-out-2019/" data-linked="linked" data-target-link="/film/knives-out-2019/" data-target-link-target="" data-cache-busting-key="81d75d0c" data-show-menu="true" > <img src="https://s.ltrbxd.com/static/img/empty-poster-70.8112b435.png" class="image" width="70" height="105" alt="Knives Out"/> <span class="frame"><span class="frame-title"></span></span> </div> <p class="poster-viewingdata"> <span class="rating -tiny -darker rated-6">★★★</span> </p>
+
+						</li>
+					
+						<li class="poster-container">
+							<div class="really-lazy-load poster film-poster film-poster-447409 linked-film-poster" data-image-width="70" data-image-height="105" data-film-id="447409" data-film-slug="/film/the-laundromat-2019/" data-linked="linked" data-target-link="/film/the-laundromat-2019/" data-target-link-target="" data-cache-busting-key="0722b32e" data-show-menu="true" > <img src="https://s.ltrbxd.com/static/img/empty-poster-70.8112b435.png" class="image" width="70" height="105" alt="The Laundromat"/> <span class="frame"><span class="frame-title"></span></span> </div> <p class="poster-viewingdata"> <span class="rating -tiny -darker rated-8">★★★★</span> </p>
+
+						</li>
+					
+						<li class="poster-container">
+							<div class="really-lazy-load poster film-poster film-poster-422682 linked-film-poster" data-image-width="70" data-image-height="105" data-film-id="422682" data-film-slug="/film/marriage-story-2019/" data-linked="linked" data-target-link="/film/marriage-story-2019/" data-target-link-target="" data-cache-busting-key="0f8b43eb" data-show-menu="true" > <img src="https://s.ltrbxd.com/static/img/empty-poster-70.8112b435.png" class="image" width="70" height="105" alt="Marriage Story"/> <span class="frame"><span class="frame-title"></span></span> </div> <p class="poster-viewingdata"> <span class="rating -tiny -darker rated-6">★★★</span> </p>
+
+						</li>
+					
+						<li class="poster-container">
+							<div class="really-lazy-load poster film-poster film-poster-459564 linked-film-poster" data-image-width="70" data-image-height="105" data-film-id="459564" data-film-slug="/film/midsommar/" data-linked="linked" data-target-link="/film/midsommar/" data-target-link-target="" data-cache-busting-key="8143a809" data-show-menu="true" > <img src="https://s.ltrbxd.com/static/img/empty-poster-70.8112b435.png" class="image" width="70" height="105" alt="Midsommar"/> <span class="frame"><span class="frame-title"></span></span> </div> <p class="poster-viewingdata"> <span class="rating -tiny -darker rated-6">★★★</span> </p>
+
+						</li>
+					
+						<li class="poster-container">
+							<div class="really-lazy-load poster film-poster film-poster-397859 linked-film-poster" data-image-width="70" data-image-height="105" data-film-id="397859" data-film-slug="/film/once-upon-a-time-in-hollywood/" data-linked="linked" data-target-link="/film/once-upon-a-time-in-hollywood/" data-target-link-target="" data-cache-busting-key="0152a634" data-show-menu="true" > <img src="https://s.ltrbxd.com/static/img/empty-poster-70.8112b435.png" class="image" width="70" height="105" alt="Once Upon a Time… in Hollywood"/> <span class="frame"><span class="frame-title"></span></span> </div> <p class="poster-viewingdata"> <span class="rating -tiny -darker rated-8">★★★★</span> </p>
+
+						</li>
+					
+						<li class="poster-container">
+							<div class="really-lazy-load poster film-poster film-poster-426406 linked-film-poster" data-image-width="70" data-image-height="105" data-film-id="426406" data-film-slug="/film/parasite-2019/" data-linked="linked" data-target-link="/film/parasite-2019/" data-target-link-target="" data-cache-busting-key="0968db69" data-show-menu="true" > <img src="https://s.ltrbxd.com/static/img/empty-poster-70.8112b435.png" class="image" width="70" height="105" alt="Parasite"/> <span class="frame"><span class="frame-title"></span></span> </div> <p class="poster-viewingdata"> <span class="rating -tiny -darker rated-10">★★★★★</span> </p>
+
+						</li>
+					
+						<li class="poster-container">
+							<div class="really-lazy-load poster film-poster film-poster-433863 linked-film-poster" data-image-width="70" data-image-height="105" data-film-id="433863" data-film-slug="/film/the-lighthouse-2019/" data-linked="linked" data-target-link="/film/the-lighthouse-2019/" data-target-link-target="" data-cache-busting-key="89968267" data-show-menu="true" > <img src="https://s.ltrbxd.com/static/img/empty-poster-70.8112b435.png" class="image" width="70" height="105" alt="The Lighthouse"/> <span class="frame"><span class="frame-title"></span></span> </div> <p class="poster-viewingdata -rated-and-liked"> <span class="rating -tiny -darker rated-10">★★★★★</span> <span class="like has-icon icon-liked icon-16"><span class="icon"></span></span> </p>
+
+						</li>
+					
+						<li class="poster-container">
+							<div class="really-lazy-load poster film-poster film-poster-532082 linked-film-poster" data-image-width="70" data-image-height="105" data-film-id="532082" data-film-slug="/film/chernobyl/" data-linked="linked" data-target-link="/film/chernobyl/" data-target-link-target="" data-cache-busting-key="0e56ec7f" data-show-menu="true" > <img src="https://s.ltrbxd.com/static/img/empty-poster-70.8112b435.png" class="image" width="70" height="105" alt="Chernobyl"/> <span class="frame"><span class="frame-title"></span></span> </div> <p class="poster-viewingdata"> <span class="rating -tiny -darker rated-8">★★★★</span> </p>
+
+						</li>
+					
+						<li class="poster-container">
+							<div class="really-lazy-load poster film-poster film-poster-500609 linked-film-poster" data-image-width="70" data-image-height="105" data-film-id="500609" data-film-slug="/film/escape-at-dannemora/" data-linked="linked" data-target-link="/film/escape-at-dannemora/" data-target-link-target="" data-cache-busting-key="80c04a01" data-show-menu="true" > <img src="https://s.ltrbxd.com/static/img/empty-poster-70.8112b435.png" class="image" width="70" height="105" alt="Escape at Dannemora"/> <span class="frame"><span class="frame-title"></span></span> </div> <p class="poster-viewingdata"> <span class="rating -tiny -darker rated-10">★★★★★</span> </p>
+
+						</li>
+					
+						<li class="poster-container">
+							<div class="really-lazy-load poster film-poster film-poster-420703 linked-film-poster" data-image-width="70" data-image-height="105" data-film-id="420703" data-film-slug="/film/green-book/" data-linked="linked" data-target-link="/film/green-book/" data-target-link-target="" data-cache-busting-key="8112a1c6" data-show-menu="true" > <img src="https://s.ltrbxd.com/static/img/empty-poster-70.8112b435.png" class="image" width="70" height="105" alt="Green Book"/> <span class="frame"><span class="frame-title"></span></span> </div> <p class="poster-viewingdata"> <span class="rating -tiny -darker rated-8">★★★★</span> </p>
+
+						</li>
+					
+						<li class="poster-container">
+							<div class="really-lazy-load poster film-poster film-poster-310705 linked-film-poster" data-image-width="70" data-image-height="105" data-film-id="310705" data-film-slug="/film/the-favourite/" data-linked="linked" data-target-link="/film/the-favourite/" data-target-link-target="" data-cache-busting-key="0b9863b2" data-show-menu="true" > <img src="https://s.ltrbxd.com/static/img/empty-poster-70.8112b435.png" class="image" width="70" height="105" alt="The Favourite"/> <span class="frame"><span class="frame-title"></span></span> </div> <p class="poster-viewingdata"> <span class="rating -tiny -darker rated-6">★★★</span> </p>
+
+						</li>
+					
+						<li class="poster-container">
+							<div class="really-lazy-load poster film-poster film-poster-359859 linked-film-poster" data-image-width="70" data-image-height="105" data-film-id="359859" data-film-slug="/film/roma-2018/" data-linked="linked" data-target-link="/film/roma-2018/" data-target-link-target="" data-cache-busting-key="8f4d1ed9" data-show-menu="true" > <img src="https://s.ltrbxd.com/static/img/empty-poster-70.8112b435.png" class="image" width="70" height="105" alt="Roma"/> <span class="frame"><span class="frame-title"></span></span> </div> <p class="poster-viewingdata"> <span class="rating -tiny -darker rated-8">★★★★</span> </p>
+
+						</li>
+					
+						<li class="poster-container">
+							<div class="really-lazy-load poster film-poster film-poster-454285 linked-film-poster" data-image-width="70" data-image-height="105" data-film-id="454285" data-film-slug="/film/sharp-objects/" data-linked="linked" data-target-link="/film/sharp-objects/" data-target-link-target="" data-cache-busting-key="0023dcc8" data-show-menu="true" > <img src="https://s.ltrbxd.com/static/img/empty-poster-70.8112b435.png" class="image" width="70" height="105" alt="Sharp Objects"/> <span class="frame"><span class="frame-title"></span></span> </div> <p class="poster-viewingdata"> <span class="rating -tiny -darker rated-6">★★★</span> </p>
+
+						</li>
+					
+						<li class="poster-container">
+							<div class="really-lazy-load poster film-poster film-poster-419211 linked-film-poster" data-image-width="70" data-image-height="105" data-film-id="419211" data-film-slug="/film/godless-2017/" data-linked="linked" data-target-link="/film/godless-2017/" data-target-link-target="" data-cache-busting-key="89c576de" data-show-menu="true" > <img src="https://s.ltrbxd.com/static/img/empty-poster-70.8112b435.png" class="image" width="70" height="105" alt="Godless"/> <span class="frame"><span class="frame-title"></span></span> </div> <p class="poster-viewingdata"> <span class="rating -tiny -darker rated-8">★★★★</span> </p>
+
+						</li>
+					
+						<li class="poster-container">
+							<div class="really-lazy-load poster film-poster film-poster-326279 linked-film-poster" data-image-width="70" data-image-height="105" data-film-id="326279" data-film-slug="/film/lady-bird/" data-linked="linked" data-target-link="/film/lady-bird/" data-target-link-target="" data-cache-busting-key="8fcd070c" data-show-menu="true" > <img src="https://s.ltrbxd.com/static/img/empty-poster-70.8112b435.png" class="image" width="70" height="105" alt="Lady Bird"/> <span class="frame"><span class="frame-title"></span></span> </div> <p class="poster-viewingdata"> <span class="rating -tiny -darker rated-6">★★★</span> </p>
+
+						</li>
+					
+						<li class="poster-container">
+							<div class="really-lazy-load poster film-poster film-poster-390610 linked-film-poster" data-image-width="70" data-image-height="105" data-film-id="390610" data-film-slug="/film/first-reformed/" data-linked="linked" data-target-link="/film/first-reformed/" data-target-link-target="" data-cache-busting-key="817ab395" data-show-menu="true" > <img src="https://s.ltrbxd.com/static/img/empty-poster-70.8112b435.png" class="image" width="70" height="105" alt="First Reformed"/> <span class="frame"><span class="frame-title"></span></span> </div> <p class="poster-viewingdata"> <span class="rating -tiny -darker rated-6">★★★</span> </p>
+
+						</li>
+					
+						<li class="poster-container">
+							<div class="really-lazy-load poster film-poster film-poster-333310 linked-film-poster" data-image-width="70" data-image-height="105" data-film-id="333310" data-film-slug="/film/the-killing-of-a-sacred-deer/" data-linked="linked" data-target-link="/film/the-killing-of-a-sacred-deer/" data-target-link-target="" data-cache-busting-key="02a8e97c" data-show-menu="true" > <img src="https://s.ltrbxd.com/static/img/empty-poster-70.8112b435.png" class="image" width="70" height="105" alt="The Killing of a Sacred Deer"/> <span class="frame"><span class="frame-title"></span></span> </div> <p class="poster-viewingdata"> <span class="rating -tiny -darker rated-6">★★★</span> </p>
+
+						</li>
+					
+						<li class="poster-container">
+							<div class="really-lazy-load poster film-poster film-poster-251661 linked-film-poster" data-image-width="70" data-image-height="105" data-film-id="251661" data-film-slug="/film/john-wick-chapter-2/" data-linked="linked" data-target-link="/film/john-wick-chapter-2/" data-target-link-target="" data-cache-busting-key="0f06f7f1" data-show-menu="true" > <img src="https://s.ltrbxd.com/static/img/empty-poster-70.8112b435.png" class="image" width="70" height="105" alt="John Wick: Chapter 2"/> <span class="frame"><span class="frame-title"></span></span> </div> <p class="poster-viewingdata"> <span class="rating -tiny -darker rated-6">★★★</span> </p>
+
+						</li>
+					
+						<li class="poster-container">
+							<div class="really-lazy-load poster film-poster film-poster-353117 linked-film-poster" data-image-width="70" data-image-height="105" data-film-id="353117" data-film-slug="/film/get-out-2017/" data-linked="linked" data-target-link="/film/get-out-2017/" data-target-link-target="" data-cache-busting-key="8824170c" data-show-menu="true" > <img src="https://s.ltrbxd.com/static/img/empty-poster-70.8112b435.png" class="image" width="70" height="105" alt="Get Out"/> <span class="frame"><span class="frame-title"></span></span> </div> <p class="poster-viewingdata"> <span class="rating -tiny -darker rated-8">★★★★</span> </p>
+
+						</li>
+					
+						<li class="poster-container">
+							<div class="really-lazy-load poster film-poster film-poster-382689 linked-film-poster" data-image-width="70" data-image-height="105" data-film-id="382689" data-film-slug="/film/the-young-pope/" data-linked="linked" data-target-link="/film/the-young-pope/" data-target-link-target="" data-cache-busting-key="869fca4e" data-show-menu="true" > <img src="https://s.ltrbxd.com/static/img/empty-poster-70.8112b435.png" class="image" width="70" height="105" alt="The Young Pope"/> <span class="frame"><span class="frame-title"></span></span> </div> <p class="poster-viewingdata"> <span class="rating -tiny -darker rated-8">★★★★</span> </p>
+
+						</li>
+					
+						<li class="poster-container">
+							<div class="really-lazy-load poster film-poster film-poster-263221 linked-film-poster" data-image-width="70" data-image-height="105" data-film-id="263221" data-film-slug="/film/manchester-by-the-sea/" data-linked="linked" data-target-link="/film/manchester-by-the-sea/" data-target-link-target="" data-cache-busting-key="8a8f17ae" data-show-menu="true" > <img src="https://s.ltrbxd.com/static/img/empty-poster-70.8112b435.png" class="image" width="70" height="105" alt="Manchester by the Sea"/> <span class="frame"><span class="frame-title"></span></span> </div> <p class="poster-viewingdata"> <span class="rating -tiny -darker rated-8">★★★★</span> </p>
+
+						</li>
+					
+						<li class="poster-container">
+							<div class="really-lazy-load poster film-poster film-poster-310401 linked-film-poster" data-image-width="70" data-image-height="105" data-film-id="310401" data-film-slug="/film/under-the-shadow/" data-linked="linked" data-target-link="/film/under-the-shadow/" data-target-link-target="" data-cache-busting-key="05507581" data-show-menu="true" > <img src="https://s.ltrbxd.com/static/img/empty-poster-70.8112b435.png" class="image" width="70" height="105" alt="Under the Shadow"/> <span class="frame"><span class="frame-title"></span></span> </div> <p class="poster-viewingdata -rated-and-liked"> <span class="rating -tiny -darker rated-8">★★★★</span> <span class="like has-icon icon-liked icon-16"><span class="icon"></span></span> </p>
+
+						</li>
+					
+						<li class="poster-container">
+							<div class="really-lazy-load poster film-poster film-poster-247396 linked-film-poster" data-image-width="70" data-image-height="105" data-film-id="247396" data-film-slug="/film/wolf-hall/" data-linked="linked" data-target-link="/film/wolf-hall/" data-target-link-target="" data-cache-busting-key="0b62dbc8" data-show-menu="true" > <img src="https://s.ltrbxd.com/static/img/empty-poster-70.8112b435.png" class="image" width="70" height="105" alt="Wolf Hall"/> <span class="frame"><span class="frame-title"></span></span> </div> <p class="poster-viewingdata"> <span class="rating -tiny -darker rated-10">★★★★★</span> </p>
+
+						</li>
+					
+						<li class="poster-container">
+							<div class="really-lazy-load poster film-poster film-poster-215255 linked-film-poster" data-image-width="70" data-image-height="105" data-film-id="215255" data-film-slug="/film/olive-kitteridge/" data-linked="linked" data-target-link="/film/olive-kitteridge/" data-target-link-target="" data-cache-busting-key="8648a3ac" data-show-menu="true" > <img src="https://s.ltrbxd.com/static/img/empty-poster-70.8112b435.png" class="image" width="70" height="105" alt="Olive Kitteridge"/> <span class="frame"><span class="frame-title"></span></span> </div> <p class="poster-viewingdata"> <span class="rating -tiny -darker rated-8">★★★★</span> </p>
+
+						</li>
+					
+						<li class="poster-container">
+							<div class="really-lazy-load poster film-poster film-poster-95113 linked-film-poster" data-image-width="70" data-image-height="105" data-film-id="95113" data-film-slug="/film/the-grand-budapest-hotel/" data-linked="linked" data-target-link="/film/the-grand-budapest-hotel/" data-target-link-target="" data-cache-busting-key="01af5809" data-show-menu="true" > <img src="https://s.ltrbxd.com/static/img/empty-poster-70.8112b435.png" class="image" width="70" height="105" alt="The Grand Budapest Hotel"/> <span class="frame"><span class="frame-title"></span></span> </div> <p class="poster-viewingdata"> <span class="rating -tiny -darker rated-8">★★★★</span> </p>
+
+						</li>
+					
+						<li class="poster-container">
+							<div class="really-lazy-load poster film-poster film-poster-71927 linked-film-poster" data-image-width="70" data-image-height="105" data-film-id="71927" data-film-slug="/film/boyhood/" data-linked="linked" data-target-link="/film/boyhood/" data-target-link-target="" data-cache-busting-key="84d3977a" data-show-menu="true" > <img src="https://s.ltrbxd.com/static/img/empty-poster-70.8112b435.png" class="image" width="70" height="105" alt="Boyhood"/> <span class="frame"><span class="frame-title"></span></span> </div> <p class="poster-viewingdata"> <span class="rating -tiny -darker rated-8">★★★★</span> </p>
+
+						</li>
+					
+						<li class="poster-container">
+							<div class="really-lazy-load poster film-poster film-poster-73367 linked-film-poster" data-image-width="70" data-image-height="105" data-film-id="73367" data-film-slug="/film/inside-llewyn-davis/" data-linked="linked" data-target-link="/film/inside-llewyn-davis/" data-target-link-target="" data-cache-busting-key="8c06849f" data-show-menu="true" > <img src="https://s.ltrbxd.com/static/img/empty-poster-70.8112b435.png" class="image" width="70" height="105" alt="Inside Llewyn Davis"/> <span class="frame"><span class="frame-title"></span></span> </div> <p class="poster-viewingdata"> <span class="rating -tiny -darker rated-6">★★★</span> </p>
+
+						</li>
+					
+						<li class="poster-container">
+							<div class="really-lazy-load poster film-poster film-poster-102444 linked-film-poster" data-image-width="70" data-image-height="105" data-film-id="102444" data-film-slug="/film/before-midnight/" data-linked="linked" data-target-link="/film/before-midnight/" data-target-link-target="" data-cache-busting-key="051a3a19" data-show-menu="true" > <img src="https://s.ltrbxd.com/static/img/empty-poster-70.8112b435.png" class="image" width="70" height="105" alt="Before Midnight"/> <span class="frame"><span class="frame-title"></span></span> </div> <p class="poster-viewingdata"> <span class="rating -tiny -darker rated-8">★★★★</span> </p>
+
+						</li>
+					
+						<li class="poster-container">
+							<div class="really-lazy-load poster film-poster film-poster-99975 linked-film-poster" data-image-width="70" data-image-height="105" data-film-id="99975" data-film-slug="/film/still-mine/" data-linked="linked" data-target-link="/film/still-mine/" data-target-link-target="" data-cache-busting-key="09583a10" data-show-menu="true" > <img src="https://s.ltrbxd.com/static/img/empty-poster-70.8112b435.png" class="image" width="70" height="105" alt="Still Mine"/> <span class="frame"><span class="frame-title"></span></span> </div> <p class="poster-viewingdata -rated-and-liked"> <span class="rating -tiny -darker rated-6">★★★</span> <span class="like has-icon icon-liked icon-16"><span class="icon"></span></span> </p>
+
+						</li>
+					
+						<li class="poster-container">
+							<div class="really-lazy-load poster film-poster film-poster-144807 linked-film-poster" data-image-width="70" data-image-height="105" data-film-id="144807" data-film-slug="/film/mildred-pierce-2011/" data-linked="linked" data-target-link="/film/mildred-pierce-2011/" data-target-link-target="" data-cache-busting-key="08939767" data-show-menu="true" > <img src="https://s.ltrbxd.com/static/img/empty-poster-70.8112b435.png" class="image" width="70" height="105" alt="Mildred Pierce"/> <span class="frame"><span class="frame-title"></span></span> </div> <p class="poster-viewingdata"> <span class="rating -tiny -darker rated-6">★★★</span> </p>
+
+						</li>
+					
+						<li class="poster-container">
+							<div class="really-lazy-load poster film-poster film-poster-136354 linked-film-poster" data-image-width="70" data-image-height="105" data-film-id="136354" data-film-slug="/film/the-pacific/" data-linked="linked" data-target-link="/film/the-pacific/" data-target-link-target="" data-cache-busting-key="8137df32" data-show-menu="true" > <img src="https://s.ltrbxd.com/static/img/empty-poster-70.8112b435.png" class="image" width="70" height="105" alt="The Pacific"/> <span class="frame"><span class="frame-title"></span></span> </div> <p class="poster-viewingdata"> <span class="rating -tiny -darker rated-6">★★★</span> </p>
+
+						</li>
+					
+						<li class="poster-container">
+							<div class="really-lazy-load poster film-poster film-poster-48791 linked-film-poster" data-image-width="70" data-image-height="105" data-film-id="48791" data-film-slug="/film/bee-movie/" data-linked="linked" data-target-link="/film/bee-movie/" data-target-link-target="" data-cache-busting-key="0e0480a0" data-show-menu="true" > <img src="https://s.ltrbxd.com/static/img/empty-poster-70.8112b435.png" class="image" width="70" height="105" alt="Bee Movie"/> <span class="frame"><span class="frame-title"></span></span> </div> <p class="poster-viewingdata"> <span class="rating -tiny -darker rated-8">★★★★</span> </p>
+
+						</li>
+					
+						<li class="poster-container">
+							<div class="really-lazy-load poster film-poster film-poster-50476 linked-film-poster" data-image-width="70" data-image-height="105" data-film-id="50476" data-film-slug="/film/lost-in-space/" data-linked="linked" data-target-link="/film/lost-in-space/" data-target-link-target="" data-cache-busting-key="07e26362" data-show-menu="true" > <img src="https://s.ltrbxd.com/static/img/empty-poster-70.8112b435.png" class="image" width="70" height="105" alt="Lost in Space"/> <span class="frame"><span class="frame-title"></span></span> </div> <p class="poster-viewingdata"> <span class="rating -tiny -darker rated-4">★★</span> </p>
+
+						</li>
+					
+						<li class="poster-container">
+							<div class="really-lazy-load poster film-poster film-poster-45157 linked-film-poster" data-image-width="70" data-image-height="105" data-film-id="45157" data-film-slug="/film/nobodys-fool/" data-linked="linked" data-target-link="/film/nobodys-fool/" data-target-link-target="" data-cache-busting-key="042c14d3" data-show-menu="true" > <img src="https://s.ltrbxd.com/static/img/empty-poster-70.8112b435.png" class="image" width="70" height="105" alt="Nobody's Fool"/> <span class="frame"><span class="frame-title"></span></span> </div> <p class="poster-viewingdata"> <span class="rating -tiny -darker rated-10">★★★★★</span> </p>
+
+						</li>
+					
+						<li class="poster-container">
+							<div class="really-lazy-load poster film-poster film-poster-43571 linked-film-poster" data-image-width="70" data-image-height="105" data-film-id="43571" data-film-slug="/film/heartburn/" data-linked="linked" data-target-link="/film/heartburn/" data-target-link-target="" data-cache-busting-key="07ae6d44" data-show-menu="true" > <img src="https://s.ltrbxd.com/static/img/empty-poster-70.8112b435.png" class="image" width="70" height="105" alt="Heartburn"/> <span class="frame"><span class="frame-title"></span></span> </div> <p class="poster-viewingdata"> <span class="rating -tiny -darker rated-6">★★★</span> </p>
+
+						</li>
+					
+						<li class="poster-container">
+							<div class="really-lazy-load poster film-poster film-poster-51482 linked-film-poster" data-image-width="70" data-image-height="105" data-film-id="51482" data-film-slug="/film/butch-cassidy-and-the-sundance-kid/" data-linked="linked" data-target-link="/film/butch-cassidy-and-the-sundance-kid/" data-target-link-target="" data-cache-busting-key="0ee2342b" data-show-menu="true" > <img src="https://s.ltrbxd.com/static/img/empty-poster-70.8112b435.png" class="image" width="70" height="105" alt="Butch Cassidy and the Sundance Kid"/> <span class="frame"><span class="frame-title"></span></span> </div> <p class="poster-viewingdata"> <span class="rating -tiny -darker rated-10">★★★★★</span> </p>
+
+						</li>
+					
+						<li class="poster-container">
+							<div class="really-lazy-load poster film-poster film-poster-51596 linked-film-poster" data-image-width="70" data-image-height="105" data-film-id="51596" data-film-slug="/film/dial-m-for-murder/" data-linked="linked" data-target-link="/film/dial-m-for-murder/" data-target-link-target="" data-cache-busting-key="825ea4c0" data-show-menu="true" > <img src="https://s.ltrbxd.com/static/img/empty-poster-70.8112b435.png" class="image" width="70" height="105" alt="Dial M for Murder"/> <span class="frame"><span class="frame-title"></span></span> </div> <p class="poster-viewingdata"> <span class="rating -tiny -darker rated-8">★★★★</span> </p>
+
+						</li>
+					
+						<li class="poster-container">
+							<div class="really-lazy-load poster film-poster film-poster-39849 linked-film-poster" data-image-width="70" data-image-height="105" data-film-id="39849" data-film-slug="/film/night-and-the-city/" data-linked="linked" data-target-link="/film/night-and-the-city/" data-target-link-target="" data-cache-busting-key="8c6b69d9" data-show-menu="true" > <img src="https://s.ltrbxd.com/static/img/empty-poster-70.8112b435.png" class="image" width="70" height="105" alt="Night and the City"/> <span class="frame"><span class="frame-title"></span></span> </div> <p class="poster-viewingdata -rated-and-liked"> <span class="rating -tiny -darker rated-8">★★★★</span> <span class="like has-icon icon-liked icon-16"><span class="icon"></span></span> </p>
+
+						</li>
+					
+						<li class="poster-container">
+							<div class="really-lazy-load poster film-poster film-poster-51770 linked-film-poster" data-image-width="70" data-image-height="105" data-film-id="51770" data-film-slug="/film/casablanca/" data-linked="linked" data-target-link="/film/casablanca/" data-target-link-target="" data-cache-busting-key="08531569" data-show-menu="true" > <img src="https://s.ltrbxd.com/static/img/empty-poster-70.8112b435.png" class="image" width="70" height="105" alt="Casablanca"/> <span class="frame"><span class="frame-title"></span></span> </div> <p class="poster-viewingdata"> <span class="rating -tiny -darker rated-10">★★★★★</span> </p>
+
+						</li>
+					
+						<li class="poster-container">
+							<div class="really-lazy-load poster film-poster film-poster-21258 linked-film-poster" data-image-width="70" data-image-height="105" data-film-id="21258" data-film-slug="/film/david-copperfield-1935/" data-linked="linked" data-target-link="/film/david-copperfield-1935/" data-target-link-target="" data-cache-busting-key="0a69e2db" data-show-menu="true" > <img src="https://s.ltrbxd.com/static/img/empty-poster-70.8112b435.png" class="image" width="70" height="105" alt="David Copperfield"/> <span class="frame"><span class="frame-title"></span></span> </div> <p class="poster-viewingdata"> <span class="rating -tiny -darker rated-8">★★★★</span> </p>
+
+						</li>
+					
+				</ul>
+				
+			
+		<div class="clear"></div>
+	</section>
+	
+	<div class="clear"></div>
+	
+</div>
+
+
+
+
+
+
+
+
+
+
+		</div> 
+
+		
+
+	</div> 
+
+
+
+	<footer id="page-footer" class="page-footer js-page-footer js-hide-in-app">
+		<div class="content-wrap">
+			
+				<nav class="footer-nav js-footer-nav">
+					<ul>
+						<li><a href="/about/">About</a></li>
+						<li><a href="/journal/">News</a></li>
+						<li class="js-hide-in-app"><a href="/pro/">Pro</a></li>
+						<li><a href="/apps/">Apps</a></li>
+						<li><a href="https://apple.co/3TfzHVG" target="_blank" rel="noopener noreferrer">Podcast</a></li>
+						<li><a href="/year-in-review/">Year in Review</a></li>
+						<li><a href="/gift-guide/">Gift Guide</a></li>
+						<li><a href="/welcome/">Help</a></li>
+						<li><a href="/legal/terms-of-use/">Terms</a></li>
+						<li><a href="/api-beta/">API</a></li>
+						<li><a href="/contact/">Contact</a></li>
+					</ul>
+				</nav>
+	
+
+			<div class="socials">
+				<nav class="social-service-list -inline">
+					<div class="listitem -icononly">
+						<a class="trigger tooltip" href="https://twitter.com/letterboxd" target="_blank" rel="noopener noreferrer" title="Letterboxd on Twitter">
+							<svg class="glyph" aria-hidden="true" role="presentation" width="20" height="16" xmlns="http://www.w3.org/2000/svg"><path d="M17.96 4.51V4c.8-.56 1.49-1.28 2.04-2.1-.74.33-1.53.54-2.36.65.85-.5 1.5-1.3 1.8-2.24-.78.46-1.66.8-2.6.98a4.13 4.13 0 0 0-7.1 2.76c0 .31.04.62.1.92A11.72 11.72 0 0 1 1.38.74a3.99 3.99 0 0 0 1.28 5.4A4.2 4.2 0 0 1 .8 5.62v.06c0 1.95 1.42 3.59 3.29 3.96a4.06 4.06 0 0 1-1.85.07 4.1 4.1 0 0 0 3.83 2.8A8.32 8.32 0 0 1 0 14.2C1.8 15.33 3.97 16 6.28 16A11.5 11.5 0 0 0 17.96 4.51Z"/></svg>
+							<span class="label">Twitter</span>
+						</a>
+					</div>
+
+					<div class="listitem -icononly">
+						<a class="trigger tooltip" href="https://www.facebook.com/letterboxd" target="_blank" rel="noopener noreferrer" title="Letterboxd on Facebook">
+							<svg class="glyph" aria-hidden="true" role="presentation" width="19" height="19" xmlns="http://www.w3.org/2000/svg"><path d="M9.5 0a9.5 9.5 0 0 0-1.48 18.89V12H5.6V9.25h2.42V7.41c0-2.38 1.41-3.7 3.58-3.7 1.04 0 2.13.19 2.13.19v2.33h-1.2c-1.18 0-1.54.74-1.54 1.49v1.53h2.63L13.2 12h-2.21v6.89A9.5 9.5 0 0 0 9.5 0Z"/></svg>
+							<span class="label">Facebook</span>
+						</a>
+					</div>
+
+					<div class="listitem -icononly">
+						<a class="trigger tooltip" href="https://www.instagram.com/letterboxd" target="_blank" rel="noopener noreferrer" title="Letterboxd on Instagram">
+							<svg class="glyph" aria-hidden="true" role="presentation" width="20" height="20" xmlns="http://www.w3.org/2000/svg"><path d="M14.12.06c1.07.05 1.8.22 2.43.46.66.26 1.21.6 1.77 1.16.56.55.9 1.11 1.15 1.77.25.63.42 1.36.47 2.43.04.94.06 1.32.06 3.3v1.37c0 1.54 0 2.19-.03 2.77v.22l-.03.58a7.34 7.34 0 0 1-.47 2.43 4.9 4.9 0 0 1-1.15 1.77 4.9 4.9 0 0 1-1.77 1.16c-.64.24-1.36.41-2.43.46l-.61.03h-.23c-.5.02-1.06.03-2.21.03H9.2c-2 0-2.37-.02-3.32-.06a7.34 7.34 0 0 1-2.43-.46 4.9 4.9 0 0 1-1.77-1.16 4.9 4.9 0 0 1-1.16-1.77 7.34 7.34 0 0 1-.46-2.43l-.03-.61v-.2A60.9 60.9 0 0 1 0 11.5V8.75C0 7.7.01 7.17.03 6.7v-.2l.03-.61C.1 4.8.28 4.08.52 3.45a4.9 4.9 0 0 1 1.16-1.77A4.9 4.9 0 0 1 3.45.52 7.34 7.34 0 0 1 5.88.06l.61-.03h.2C7.12 0 7.6 0 8.5 0h2.74c1.62 0 2 .02 2.88.06ZM11.02 2H8.97c-1.7 0-2.05.02-2.92.06a5.4 5.4 0 0 0-1.82.33c-.45.18-.78.39-1.12.73-.34.34-.55.67-.73 1.12-.13.35-.3.86-.33 1.82C2.02 6.93 2 7.29 2 8.98v2.04c0 1.7.02 2.05.06 2.92.04.95.2 1.47.33 1.81.18.46.39.78.73 1.13.34.34.67.55 1.12.73.35.13.86.29 1.82.33.83.04 1.2.05 2.7.06h2.47c1.51 0 1.87-.02 2.71-.06a5.4 5.4 0 0 0 1.81-.33c.46-.18.78-.4 1.12-.73.35-.35.56-.67.73-1.13.14-.34.3-.86.34-1.8a49 49 0 0 0 .06-2.72V8.77a49 49 0 0 0-.06-2.71 5.4 5.4 0 0 0-.34-1.82 3.02 3.02 0 0 0-.73-1.12 3.02 3.02 0 0 0-1.12-.73 5.4 5.4 0 0 0-1.81-.33c-.88-.04-1.23-.06-2.93-.06ZM10 4.86a5.14 5.14 0 1 1 0 10.28 5.14 5.14 0 0 1 0-10.28ZM10 7a3 3 0 1 0 0 6 3 3 0 0 0 0-6Zm5.25-3.5a1.25 1.25 0 1 1 0 2.5 1.25 1.25 0 0 1 0-2.5Z"/></svg>
+							<span class="label">Instagram</span>
+						</a>
+					</div>
+
+					<div class="listitem -icononly">
+						<a class="trigger tooltip" href="https://www.youtube.com/letterboxdhq" target="_blank" rel="noopener noreferrer" title="Letterboxd on YouTube">
+							<svg class="glyph" aria-hidden="true" role="presentation" width="23" height="16" xmlns="http://www.w3.org/2000/svg"><path d="M11.74 0c.61 0 2.33.02 4.11.08l.54.02c1.7.06 3.35.18 4.1.38a2.87 2.87 0 0 1 2.03 2.02c.45 1.67.48 5.04.48 5.46v.08c0 .42-.03 3.8-.48 5.46a2.87 2.87 0 0 1-2.03 2.02c-.75.2-2.4.32-4.1.38l-.54.02c-1.78.07-3.5.08-4.11.08H11.26c-.62 0-2.33-.01-4.11-.08l-.54-.02c-1.7-.06-3.36-.18-4.1-.38A2.87 2.87 0 0 1 .48 13.5C.04 11.9 0 8.68 0 8.1v-.2c0-.58.04-3.79.48-5.4A2.87 2.87 0 0 1 2.5.48c.74-.2 2.4-.32 4.1-.38l.54-.02C8.93.02 10.65 0 11.26 0ZM9 4.57v6.86L15 8 9 4.57Z"/></svg>
+							<span class="label">YouTube</span>
+						</a>
+					</div>
+
+					
+						<div class="listitem -icononly">
+							<a class="trigger tooltip" href="https://www.tiktok.com/@letterboxd" target="_blank" rel="noopener noreferrer" title="Letterboxd on TikTok">
+								<svg class="glyph" aria-hidden="true" role="presentation" width="17" height="18" xmlns="http://www.w3.org/2000/svg"><path d="M16.48 4.32a4.62 4.62 0 0 1-3.92-2.66A4.04 4.04 0 0 1 12.23 0H9.07v11.85c0 1.93-1.19 3.07-2.65 3.07a2.71 2.71 0 0 1-2.04-.9 2.57 2.57 0 0 1-.6-2.1 2.55 2.55 0 0 1 1.26-1.81 2.7 2.7 0 0 1 2.24-.21V6.77a5.92 5.92 0 0 0-4.08.86 5.7 5.7 0 0 0-2.15 2.55 5.53 5.53 0 0 0 1.26 6.16 5.86 5.86 0 0 0 6.33 1.23 5.78 5.78 0 0 0 2.6-2.08c.64-.94.98-2.03.98-3.15V5.96a7.74 7.74 0 0 0 4.25 1.25V4.32Z"/></svg>
+								<span class="label">TikTok</span>
+							</a>
+						</div>
+					
+				</nav>
+			</div>
+			
+			
+			
+			<p class="copyright">
+				&copy; Letterboxd Limited. Made by <a href="/crew/" class="mute">fans</a> in Aotearoa New Zealand.
+				<span class="nobr"><a href="https://letterboxd.com/about/film-data/" class="mute">Film data</a> from <a href="https://www.themoviedb.org" class="mute">TMDb</a>. 
+				
+						<a href="#" class="mute mobile-site-switch" data-use-mobile-site="yes">Mobile&nbsp;site</a>.
+					
+	</span>
+				<span class="recap" style="display:none"><br/>This site is protected by reCAPTCHA and the Google <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer" class="mute">privacy policy</a> and <a href="https://policies.google.com/terms" target="_blank" rel="noopener noreferrer" class="mute">terms of service</a>&nbsp;apply.</span>
+			</p>
+		</div>
+	</footer>
+
+	<div id="remove-ads-modal" class="modal-neue fade" tabindex="-1" aria-labelledby="remove-ads-modal-title" aria-hidden="true">
+    <div class="modal-dialog -sm modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="remove-ads-modal-title">Upgrade to remove&nbsp;ads</h5>
+                <button type="button" class="close" data-bs-dismiss="modal-neue" aria-label="Close">
+                    <svg class="glyph" width="16" height="16" xmlns="http://www.w3.org/2000/svg"><g fill="none" fill-rule="evenodd" stroke-linecap="round" stroke="#000" stroke-width="2"><path d="m1 1 14 14M1 15 15 1"/></g></svg>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="body-text -hero">
+                    <p>Letterboxd is an independent service created by a small team, and we rely mostly on the support of our members to maintain our site and apps. Please consider upgrading to a <a href="/pro/">Pro account</a>—for less than a couple bucks a month, you’ll get cool additional features like all-time and annual stats pages (<a href="https://letterboxd.com/jack/stats/">example</a>), the ability to select (and filter by) your favorite streaming services, and no ads!</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <a href="/pro/" class="button -action button-action">Learn more about Pro</a>
+            </div>
+        </div>
+    </div>
+</div>
+	
+
+
+
+
+
+
+<form id="poster-picker-modal" class="modal-neue fade poster-picker-modal" method="post" action="" novalidate="novalidate" tabindex="-1" role="dialog" aria-labelledby="poster-picker-modal-title" aria-hidden="true" data-bs-backdrop="static">
+    <div class="modal-dialog -lg modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="poster-picker-modal-title">Select your preferred poster</h5>
+                <button type="button" class="close" data-bs-dismiss="modal-neue" aria-label="Close">
+                    <svg class="glyph" width="16" height="16" xmlns="http://www.w3.org/2000/svg"><g fill="none" fill-rule="evenodd" stroke-linecap="round" stroke="#000" stroke-width="2"><path d="m1 1 14 14M1 15 15 1"></path></g></svg>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div id="poster-picker-0e19d88e-3f3f-488a-b47f-693a47978554" data-poster-picker-options='{"id": "0e19d88e-3f3f-488a-b47f-693a47978554"}' data-js-target="poster-picker"></div>
+            </div>
+            <div class="modal-footer">
+                <div class="poster-picker-note">
+                    <div class="body-text -small">
+                        
+<p>Posters are sourced from <a href="https://www.themoviedb.org" target="_blank">TMDb</a> and <a href="https://posteritati.com" target="_blank">Posteritati</a>, and appear for you and visitors to your profile and content, depending on settings. <a href="https://letterboxd.com/journal/posterity-custom-posters/" target="_blank">Learn more.</a></p>
+
+                    </div>
+                </div>
+
+                <div class="poster-picker-controls" data-poster-picker-controls-for="0e19d88e-3f3f-488a-b47f-693a47978554">
+                    <div class="modal-action-group -center">
+                        <button class="button -destructive" type="button" data-js-trigger="reset" disabled><span class="label">Reset poster</span></button>
+                        <button class="button -action" type="submit" data-js-trigger="submit" disabled><span class="label">Save<span class="mob-hide"> changes</span></span></button>
+                    </div>
+                    
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+	
+	<script>$(function() { if (person.showAds) { $.ajax({ dataType: 'script', cache: true, url: '//cdn.intergient.com/ramp_core.js' }) } })</script>
+</body>
+</html>
