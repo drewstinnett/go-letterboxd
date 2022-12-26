@@ -164,3 +164,35 @@ func TestPrefixWithCobraOpts(t *testing.T) {
 		require.Equal(t, tt.want, prefixWithDiaryCobraOpts(tt.opts), desc)
 	}
 }
+
+func TestTimeWithCobraString(t *testing.T) {
+	cmd := &cobra.Command{}
+	BindDiaryFilterWithCobra(cmd, DiaryCobraOpts{})
+	cmd.SetArgs([]string{"--earliest", "2020"})
+	cmd.Execute()
+
+	got, err := timeWithCobraString(cmd, "earliest")
+	require.NoError(t, err)
+	require.NotNil(t, got)
+
+	cmd = &cobra.Command{}
+	BindDiaryFilterWithCobra(cmd, DiaryCobraOpts{})
+	cmd.SetArgs([]string{"--year", "2019"})
+	cmd.Execute()
+	opts, err := DiaryFilterWithCobra(cmd, DiaryCobraOpts{})
+	require.NoError(t, err)
+	require.NotNil(t, opts)
+	require.Equal(t, time.Date(2018, time.December, 31, 0, 0, 0, 0, time.UTC), *opts.Earliest, "Expected Earliest day of the year")
+	require.Equal(t, time.Date(2020, time.January, 1, 0, 0, 0, -1, time.UTC), *opts.Latest)
+}
+
+func TestTimeWithCobraStringErr(t *testing.T) {
+	cmd := &cobra.Command{}
+	BindDiaryFilterWithCobra(cmd, DiaryCobraOpts{})
+	cmd.SetArgs([]string{"--earliest", "not-a-date"})
+	cmd.Execute()
+
+	got, err := timeWithCobraString(cmd, "earliest")
+	require.Error(t, err)
+	require.Nil(t, got)
+}

@@ -184,8 +184,8 @@ func DiaryFilterWithCobra(cmd *cobra.Command, dopts DiaryCobraOpts) (*DiaryFilte
 			return nil, err
 		}
 
-		e := time.Date(year, time.Month(1), 1, 0, 0, 0, 0, time.UTC)
-		l := time.Date(year+1, time.Month(1), 0, 0, 0, 0, 0, time.UTC)
+		e := time.Date(year, time.Month(1), 0, 0, 0, 0, 0, time.UTC)
+		l := time.Date(year, time.Month(12), 31, 23, 59, 59, 999999999, time.UTC)
 		opts.Earliest = &e
 		opts.Latest = &l
 	}
