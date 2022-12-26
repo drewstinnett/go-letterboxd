@@ -177,7 +177,7 @@ func TestTimeWithCobraString(t *testing.T) {
 
 	cmd = &cobra.Command{}
 	BindDiaryFilterWithCobra(cmd, DiaryCobraOpts{})
-	cmd.SetArgs([]string{"--year", "2019"})
+	cmd.SetArgs([]string{"--year", "2019", "--rewatched"})
 	cmd.Execute()
 	opts, err := DiaryFilterWithCobra(cmd, DiaryCobraOpts{})
 	require.NoError(t, err)
