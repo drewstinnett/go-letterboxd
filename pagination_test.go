@@ -1,7 +1,9 @@
 package letterboxd
 
 import (
+	"bytes"
 	"os"
+	"strings"
 	"testing"
 
 	"github.com/PuerkitoBio/goquery"
@@ -20,6 +22,13 @@ func TestExtractPagination(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, 1, pagination.CurrentPage)
 	require.Equal(t, 59, pagination.TotalPages)
+}
+
+func TestExtractPaginationNoPagination(t *testing.T) {
+	p, err := ExtractPagination(strings.NewReader("Just some text"))
+	require.Nil(t, p)
+	require.Error(t, err)
+	require.EqualError(t, err, "could not extract pagination, no current page")
 }
 
 func TestExtractPaginationBytes(t *testing.T) {
@@ -82,7 +91,7 @@ func TestExtractPaginationBytes(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		pagination, err := ExtractPaginationWithBytes(tt.content)
+		pagination, err := ExtractPagination(bytes.NewReader(tt.content))
 		require.Equal(t, tt.expectedError, err)
 		require.Equal(t, tt.expectedPagination, pagination)
 	}
@@ -106,7 +115,7 @@ func TestExtractHasNext(t *testing.T) {
 	b, err := os.Open("testdata/user/following/1.html")
 	require.NoError(t, err)
 	defer b.Close()
-	got := extractHasNext(b)
+	got := hasNext(b)
 	require.True(t, got)
 }
 
@@ -114,20 +123,20 @@ func TestExtractNotHasNext(t *testing.T) {
 	b, err := os.Open("testdata/user/following/2.html")
 	require.NoError(t, err)
 	defer b.Close()
-	got := extractHasNext(b)
+	got := hasNext(b)
 	require.False(t, got)
 }
 
 func TestExtractHasNextBytes(t *testing.T) {
 	b, err := os.ReadFile("testdata/user/following/1.html")
 	require.NoError(t, err)
-	got := extractHasNextWithBytes(b)
+	got := hasNext(bytes.NewReader(b))
 	require.True(t, got)
 }
 
 func TestExtractNotHasNextBytes(t *testing.T) {
 	b, err := os.ReadFile("testdata/user/following/2.html")
 	require.NoError(t, err)
-	got := extractHasNextWithBytes(b)
+	got := hasNext(bytes.NewReader(b))
 	require.False(t, got)
 }

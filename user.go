@@ -59,7 +59,7 @@ func ExtractPeople(r io.Reader) (interface{}, *Pagination, error) {
 	if err != nil {
 		return nil, nil, err
 	}
-	hasNext := extractHasNextWithBytes(body)
+	hasNext := hasNext(bytes.NewReader(body))
 	doc, err := goquery.NewDocumentFromReader(bytes.NewReader(body))
 	if err != nil {
 		return nil, nil, err
@@ -376,7 +376,7 @@ func ExtractUserFilms(r io.Reader) (interface{}, *Pagination, error) {
 		return nil, nil, err
 	}
 	previews := previewsWithDoc(doc)
-	pagination, err := ExtractPaginationWithReader(&pageBuf)
+	pagination, err := ExtractPagination(&pageBuf)
 	if err != nil {
 		log.Warn().Msg("No pagination data found, assuming it to be a single page")
 		pagination = &Pagination{

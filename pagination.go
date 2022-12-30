@@ -1,9 +1,10 @@
 package letterboxd
 
 import (
-	"bytes"
 	"errors"
+	"fmt"
 	"io"
+	"os"
 	"regexp"
 	"strconv"
 	"strings"
@@ -11,6 +12,15 @@ import (
 	"github.com/PuerkitoBio/goquery"
 	"github.com/rs/zerolog/log"
 )
+
+// Paginationer is anything that can return Pagination data when given a goquery.Document
+type paginationer func(*goquery.Document) (*Pagination, error)
+
+// paginationers are all of the functions we have to detect pagination
+var paginationers []paginationer = []paginationer{
+	paginationFromDivPaginatePages,
+	paginationFromBlockHeading,
+}
 
 // Pagination contains all the information about a pages pagination
 type Pagination struct {
@@ -22,7 +32,16 @@ type Pagination struct {
 	IsLast       bool `json:"is_last"`
 }
 
-// SetTotalItems will set the TotalItems count, along with anything else that needs an update
+// complete fills in whatever available that is missing info is in the Pagination object
+func (p *Pagination) complete() {
+	if p.CurrentPage == p.TotalPages {
+		p.IsLast = true
+	} else {
+		p.NextPage = p.CurrentPage + 1
+	}
+}
+
+// SetTotalItems will set the TotalItems count, along with anything else that needs an update based on the TotalItems
 func (p *Pagination) SetTotalItems(i int) {
 	p.TotalItems = i
 	if p.ItemsPerPage != 0 {
@@ -104,6 +123,7 @@ func paginationFromBlockHeading(doc *goquery.Document) (*Pagination, error) {
 		ItemsPerPage: 72,
 	}
 	doc.Find("p.ui-block-heading").Each(func(i int, s *goquery.Selection) {
+		fmt.Fprintf(os.Stderr, "DIIIING")
 		matches := regexp.MustCompile(`There are (\d+)`).FindStringSubmatch(strings.ReplaceAll(strings.TrimSpace(s.Text()), ",", ""))
 		if len(matches) > 1 {
 			count, err := strconv.Atoi(matches[1])
@@ -119,52 +139,40 @@ func paginationFromBlockHeading(doc *goquery.Document) (*Pagination, error) {
 
 func paginationIfCurrent(p *Pagination) (*Pagination, error) {
 	if p.CurrentPage == 0 {
-		return p, errors.New("no pagination found")
+		return nil, errors.New("no pagination found")
 	}
 	return p, nil
 }
 
 // ExtractPaginationWithDoc returns a pagination object from a goquery Doc
 func ExtractPaginationWithDoc(doc *goquery.Document) (*Pagination, error) {
-	p, err := paginationFromDivPaginatePages(doc)
-	// Hmmm, haven't found pagination info yet, check to see if it's one of those weird film list pages
-	if err != nil {
-		p, err = paginationFromBlockHeading(doc)
+	var p *Pagination
+	for _, pa := range paginationers {
+		var err error
+		p, err = pa(doc)
+		if err == nil {
+			break
+		}
 	}
-
 	// Dang, still no pagination??
-	if err != nil {
+	if p == nil {
 		return nil, errors.New("could not extract pagination, no current page")
 	}
-	if p.CurrentPage == p.TotalPages {
-		p.IsLast = true
-	} else {
-		p.NextPage = p.CurrentPage + 1
-	}
+	p.complete()
 	return p, nil
 }
 
-// ExtractPaginationWithBytes pulls the pagination in from a given byte array
-func ExtractPaginationWithBytes(b []byte) (*Pagination, error) {
-	doc, err := goquery.NewDocumentFromReader(bytes.NewReader(b))
-	if err != nil {
-		return nil, err
-	}
+// ExtractPagination pulls the pagination from an io.Reader
+func ExtractPagination(r io.Reader) (*Pagination, error) {
+	doc := mustNewDocumentFromReader(r)
 	return ExtractPaginationWithDoc(doc)
 }
 
-// ExtractPaginationWithReader pulls the pagination from an io.Reader
-func ExtractPaginationWithReader(r io.Reader) (*Pagination, error) {
-	doc, err := goquery.NewDocumentFromReader(r)
-	if err != nil {
-		return nil, err
-	}
-	return ExtractPaginationWithDoc(doc)
-}
-
-func extractHasNext(r io.Reader) bool {
-	doc, err := goquery.NewDocumentFromReader(r)
-	panicIfErr(err)
+// hasNext returns true if a page has more pages to show.  This is needed for
+// pagination that only shows if there is another page available, but not how
+// many total pages there are
+func hasNext(r io.Reader) bool {
+	doc := mustNewDocumentFromReader(r)
 
 	var ret bool
 	doc.Find("div.pagination").Find("a.next").EachWithBreak(func(i int, s *goquery.Selection) bool {
@@ -174,8 +182,4 @@ func extractHasNext(r io.Reader) bool {
 		return false
 	})
 	return ret
-}
-
-func extractHasNextWithBytes(r []byte) bool {
-	return extractHasNext(bytes.NewReader(r))
 }
