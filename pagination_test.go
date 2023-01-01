@@ -140,3 +140,103 @@ func TestExtractNotHasNextBytes(t *testing.T) {
 	got := hasNext(bytes.NewReader(b))
 	require.False(t, got)
 }
+
+func TestPageWithURL(t *testing.T) {
+	tests := map[string]struct {
+		url     string
+		want    int
+		wantErr string
+	}{
+		"no-trailing-slash": {
+			url:  "https://example.com/page/2",
+			want: 2,
+		},
+		"trailing-slash": {
+			url:  "https://example.com/page/2/",
+			want: 2,
+		},
+		"bad-url": {
+			url:     ";",
+			wantErr: "strconv.Atoi: parsing \";\": invalid syntax",
+		},
+	}
+	for desc, tt := range tests {
+		got, err := pageWithURL(tt.url)
+		if tt.wantErr == "" {
+			require.NoError(t, err, desc)
+			require.Greater(t, got, 0, desc)
+		} else {
+			require.Error(t, err, desc)
+			require.EqualError(t, err, "strconv.Atoi: parsing \";\": invalid syntax", desc)
+		}
+	}
+}
+
+func TestParseDivPaginationNext(t *testing.T) {
+	tests := map[string]struct {
+		pagination *Pagination
+		html       string
+		want       *Pagination
+	}{
+		"normal": {
+			pagination: &Pagination{},
+			html:       `<div class="pagination"> <div class="paginate-nextprev paginate-disabled"><span class="previous">Previous</span></div> <div class="paginate-nextprev"><a class="next" href="/alright__fine/followers/page/2/">Next</a></div> </div>`,
+			want: &Pagination{
+				CurrentPage: 1,
+				NextPage:    2,
+			},
+		},
+		"missing-href": {
+			pagination: &Pagination{},
+			html:       `<div class="pagination"> <div class="paginate-nextprev paginate-disabled"><span class="previous">Previous</span></div> <div class="paginate-nextprev"><a class="next">Next</a></div> </div>`,
+			want:       &Pagination{},
+		},
+		"no-page-in-href": {
+			pagination: &Pagination{},
+			html:       `<div class="pagination"> <div class="paginate-nextprev paginate-disabled"><span class="previous">Previous</span></div> <div class="paginate-nextprev"><a class="next" href="/alright__fine/followers/">Next</a></div> </div>`,
+			want:       &Pagination{},
+		},
+	}
+	for dest, tt := range tests {
+		sel := selectWithString(tt.html)
+		tt.pagination.parseDivPaginationNext(sel)
+		require.Equal(t, tt.want, tt.pagination, dest)
+	}
+}
+
+func TestParseDivPaginationPrevious(t *testing.T) {
+	tests := map[string]struct {
+		pagination *Pagination
+		html       string
+		want       *Pagination
+	}{
+		"normal": {
+			pagination: &Pagination{},
+			html:       `<div class="pagination"> <div class="paginate-nextprev"><a class="previous" href="/films/popular/page/2/">Previous</a></div> <div class="paginate-nextprev"><a class="next" href="/films/popular/page/4/">Next</a></div> </div>`,
+			want: &Pagination{
+				CurrentPage: 3,
+			},
+		},
+		"missing-href": {
+			pagination: &Pagination{},
+			html:       `<div class="pagination"> <div class="paginate-nextprev"><a class="previous">Previous</a></div> <div class="paginate-nextprev"><a class="next" href="/films/popular/page/4/">Next</a></div> </div>`,
+			want:       &Pagination{},
+		},
+		"no-page-in-href": {
+			pagination: &Pagination{},
+			html:       `<div class="pagination"> <div class="paginate-nextprev"><a class="previous" href="/films/popular/">Previous</a></div> <div class="paginate-nextprev"><a class="next" href="/films/popular/page/4/">Next</a></div> </div>`,
+			want:       &Pagination{},
+		},
+	}
+	for dest, tt := range tests {
+		sel := selectWithString(tt.html)
+		tt.pagination.parseDivPaginationPrevious(sel)
+		require.Equal(t, tt.want, tt.pagination, dest)
+	}
+}
+
+// selectWithString takes a string, and converts it in to a goquery.Selection. Really just useful for helping test
+func selectWithString(s string) *goquery.Selection {
+	doc := mustNewDocumentFromReader(strings.NewReader(s))
+	return doc.Find("*")
+}

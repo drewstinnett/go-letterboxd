@@ -4,6 +4,7 @@ import (
 	"errors"
 	"io"
 	"math/rand"
+	"net/url"
 	"strings"
 	"time"
 
@@ -90,4 +91,13 @@ func mustNewDocumentFromReader(r io.Reader) *goquery.Document {
 		panic(err)
 	}
 	return doc
+}
+
+func mustParseURL(u string) *url.URL {
+	u = strings.TrimSuffix(u, "/")
+	url, err := url.Parse(u)
+	if err != nil {
+		panic(err)
+	}
+	return url
 }
