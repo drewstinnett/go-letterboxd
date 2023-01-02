@@ -11,11 +11,12 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"os"
+	"sync"
 	"time"
 
 	"github.com/go-redis/cache/v8"
 	"github.com/go-redis/redis/v8"
-	"github.com/rs/zerolog/log"
 )
 
 const (
@@ -165,15 +166,13 @@ func (c *Client) getFromCache(ctx context.Context, key string) *PageData {
 
 func (c *Client) setCache(ctx context.Context, key string, pData PageData) {
 	if c.Cache != nil {
-		// max, min := 72, 24
-		// cacheFor := rand.Intn(max-min) + min // nolint:golint,gosec
 		if err := c.Cache.Set(&cache.Item{
 			Ctx:   ctx,
 			Key:   key,
 			Value: pData,
 			TTL:   time.Hour * 24,
 		}); err != nil {
-			log.Warn().Err(err).Msg("Error Writing Cache")
+			fmt.Fprintf(os.Stderr, "Error writing cache: %v", err)
 		}
 	}
 }
@@ -224,10 +223,7 @@ func (c *Client) sendRequest(req *http.Request, extractor func(io.Reader) (inter
 			return nil, nil, err
 		}
 		if string(b) == "" {
-			log.Warn().
-				Int("status", res.StatusCode).
-				Str("url", req.URL.String()).
-				Msg("Empty body found. Check reader...")
+			fmt.Fprintf(os.Stderr, "got empty body back from: %v", req.URL.String())
 		}
 		items, pagination, err := extractor(bytes.NewReader(b))
 		if err != nil {
@@ -289,3 +285,25 @@ func mustParseURL(path string) *url.URL {
 	return u
 }
 */
+
+func (c *Client) slurpMiddlePages(ctx context.Context, username string, pagination *Pagination, itemsPerFullPage int, rchan chan *Film, listT string) {
+	if pagination.TotalPages > 2 {
+		pagination.TotalItems += ((pagination.TotalPages - 2) * itemsPerFullPage)
+		middlePageCount := pagination.TotalPages - 2
+		wg := sync.WaitGroup{}
+		wg.Add(middlePageCount)
+		for i := 2; i < pagination.TotalPages; i++ {
+			go func(i int) {
+				defer wg.Done()
+				pfilms, _, err := c.Film.ExtractEnhancedFilmsWithPath(ctx, fmt.Sprintf("%s/%s/%s/page/%v/", c.baseURL, username, listT, i))
+				if err != nil {
+					return
+				}
+				for _, film := range pfilms {
+					rchan <- film
+				}
+			}(i)
+		}
+		wg.Wait()
+	}
+}

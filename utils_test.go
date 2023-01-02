@@ -92,3 +92,28 @@ func TestPopulateRemainingPages(t *testing.T) {
 		require.Equal(t, tt.want, got, k)
 	}
 }
+
+func TestPopulateRemainingPagesShuffle(t *testing.T) {
+	got := populateRemainingPages(5, 7, true)
+	require.NotNil(t, got)
+	require.Equal(t, 6, len(got))
+}
+
+func TestMin(t *testing.T) {
+	got := min(2, 1, 3)
+	require.Equal(t, 1, got)
+
+	require.Panics(t, func() { min() })
+}
+
+func TestMax(t *testing.T) {
+	got := max(2, 3, 1)
+	require.Equal(t, 3, got)
+
+	require.Panics(t, func() { max() })
+}
+
+func TestStringOr(t *testing.T) {
+	require.Equal(t, "given", stringOr("given", "default"))
+	require.Equal(t, "default", stringOr("", "default"))
+}

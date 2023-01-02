@@ -1,7 +1,6 @@
 package letterboxd
 
 import (
-	"bytes"
 	"errors"
 	"io"
 	"regexp"
@@ -9,8 +8,16 @@ import (
 	"strings"
 
 	"github.com/PuerkitoBio/goquery"
-	"github.com/rs/zerolog/log"
 )
+
+// Paginationer is anything that can return Pagination data when given a goquery.Document
+type paginationer func(*goquery.Document) (*Pagination, error)
+
+// paginationers are all of the functions we have to detect pagination
+var paginationers []paginationer = []paginationer{
+	paginationFromDivPaginatePages,
+	paginationFromBlockHeading,
+}
 
 // Pagination contains all the information about a pages pagination
 type Pagination struct {
@@ -22,12 +29,32 @@ type Pagination struct {
 	IsLast       bool `json:"is_last"`
 }
 
-// SetTotalItems will set the TotalItems count, along with anything else that needs an update
+// complete fills in whatever available that is missing info is in the Pagination object
+func (p *Pagination) complete() {
+	if p.CurrentPage == p.TotalPages {
+		p.IsLast = true
+	} else {
+		p.NextPage = p.CurrentPage + 1
+	}
+}
+
+// SetTotalItems will set the TotalItems count, along with anything else that needs an update based on the TotalItems
 func (p *Pagination) SetTotalItems(i int) {
 	p.TotalItems = i
 	if p.ItemsPerPage != 0 {
 		p.TotalPages = (p.TotalItems / p.ItemsPerPage) + 1
 	}
+}
+
+// Given a URL, return the page number it contains. This is usually the last dir in the path section
+func pageWithURL(u string) (int, error) {
+	url := mustParseURL(u)
+	parts := strings.Split(url.Path, "/")
+	page, err := strconv.Atoi(parts[len(parts)-1])
+	if err != nil {
+		return 0, err
+	}
+	return page, nil
 }
 
 func (p *Pagination) parseDivPaginationNext(s *goquery.Selection) {
@@ -37,12 +64,15 @@ func (p *Pagination) parseDivPaginationNext(s *goquery.Selection) {
 		if !ok {
 			return
 		}
-		parts := strings.Split(href, "/")
-		next, err := strconv.Atoi(parts[len(parts)-2])
+		pageNo, err := pageWithURL(href)
 		if err != nil {
 			return
 		}
-		p.CurrentPage = next - 1
+		p.CurrentPage = pageNo - 1
+		// Set next page if not already set
+		if p.NextPage == 0 {
+			p.NextPage = pageNo
+		}
 	}
 }
 
@@ -53,13 +83,12 @@ func (p *Pagination) parseDivPaginationPrevious(s *goquery.Selection) {
 		if !ok {
 			return
 		}
-		parts := strings.Split(href, "/")
-		prev, err := strconv.Atoi(parts[len(parts)-2])
+
+		pageNo, err := pageWithURL(href)
 		if err != nil {
-			log.Warn().Err(err).Msg("Error detecting previous page")
 			return
 		}
-		p.CurrentPage = prev + 1
+		p.CurrentPage = pageNo + 1
 	}
 }
 
@@ -70,31 +99,37 @@ func (p *Pagination) parseDivPagination(doc *goquery.Document) {
 	})
 }
 
+func parsePaginateCurrent(s *goquery.Selection, p *Pagination) {
+	if s.HasClass("paginate-current") {
+		t := strings.TrimSpace(s.Text())
+		if t != "…" {
+			curP, err := strconv.Atoi(t)
+			if err == nil {
+				p.CurrentPage = curP
+				// Set current page to last, it should be overridden later
+				p.TotalPages = p.CurrentPage
+			}
+		}
+	}
+}
+
+func parsePaginatePage(s *goquery.Selection, p *Pagination) {
+	if s.HasClass("paginate-page") {
+		t := strings.TrimSpace(s.Text())
+		if t != "…" {
+			totP, err := strconv.Atoi(t)
+			if err == nil {
+				p.TotalPages = totP
+			}
+		}
+	}
+}
+
 func paginationFromDivPaginatePages(doc *goquery.Document) (*Pagination, error) {
 	p := &Pagination{}
-	doc.Find("div.paginate-pages").Each(func(i int, s *goquery.Selection) {
-		s.Find("li").Each(func(i int, s *goquery.Selection) {
-			var err error
-			if s.HasClass("paginate-current") {
-				t := strings.TrimSpace(s.Text())
-				if t != "…" {
-					p.CurrentPage, err = strconv.Atoi(t)
-					if err != nil {
-						log.Debug().Err(err).Msg("Error converting current page to int")
-					}
-					// Set current page to last, it should be overridden later
-					p.TotalPages = p.CurrentPage
-				}
-			} else if s.HasClass("paginate-page") {
-				t := strings.TrimSpace(s.Text())
-				if t != "…" {
-					p.TotalPages, err = strconv.Atoi(t)
-					if err != nil {
-						log.Debug().Err(err).Msg("Error converting total page to int")
-					}
-				}
-			}
-		})
+	doc.Find("div.paginate-pages").Find("li").Each(func(i int, s *goquery.Selection) {
+		parsePaginateCurrent(s, p)
+		parsePaginatePage(s, p)
 	})
 	return paginationIfCurrent(p)
 }
@@ -107,64 +142,58 @@ func paginationFromBlockHeading(doc *goquery.Document) (*Pagination, error) {
 		matches := regexp.MustCompile(`There are (\d+)`).FindStringSubmatch(strings.ReplaceAll(strings.TrimSpace(s.Text()), ",", ""))
 		if len(matches) > 1 {
 			count, err := strconv.Atoi(matches[1])
-			if err != nil {
-				return
+			if err == nil {
+				p.SetTotalItems(count)
+				p.parseDivPagination(doc)
 			}
-			p.SetTotalItems(count)
-			p.parseDivPagination(doc)
 		}
 	})
 	return paginationIfCurrent(p)
 }
 
+// paginationIfCurrent returns the pagination type _if_ a current page is set.
 func paginationIfCurrent(p *Pagination) (*Pagination, error) {
 	if p.CurrentPage == 0 {
-		return p, errors.New("no pagination found")
+		return nil, errors.New("no pagination found")
 	}
 	return p, nil
+}
+
+func paginationWithDoc(doc *goquery.Document) (*Pagination, error) {
+	// Loop through all the pagination items we have, and return whichever
+	// gives us pagination first
+	var p *Pagination
+	for _, pa := range paginationers {
+		var err error
+		p, err = pa(doc)
+		if err == nil {
+			p.complete()
+			return p, nil
+		}
+	}
+	return nil, errors.New("no pagination found")
 }
 
 // ExtractPaginationWithDoc returns a pagination object from a goquery Doc
 func ExtractPaginationWithDoc(doc *goquery.Document) (*Pagination, error) {
-	p, err := paginationFromDivPaginatePages(doc)
-	// Hmmm, haven't found pagination info yet, check to see if it's one of those weird film list pages
-	if err != nil {
-		p, err = paginationFromBlockHeading(doc)
-	}
-
+	p, err := paginationWithDoc(doc)
 	// Dang, still no pagination??
 	if err != nil {
 		return nil, errors.New("could not extract pagination, no current page")
 	}
-	if p.CurrentPage == p.TotalPages {
-		p.IsLast = true
-	} else {
-		p.NextPage = p.CurrentPage + 1
-	}
 	return p, nil
 }
 
-// ExtractPaginationWithBytes pulls the pagination in from a given byte array
-func ExtractPaginationWithBytes(b []byte) (*Pagination, error) {
-	doc, err := goquery.NewDocumentFromReader(bytes.NewReader(b))
-	if err != nil {
-		return nil, err
-	}
-	return ExtractPaginationWithDoc(doc)
+// ExtractPagination pulls the pagination from an io.Reader
+func ExtractPagination(r io.Reader) (*Pagination, error) {
+	return ExtractPaginationWithDoc(mustNewDocumentFromReader(r))
 }
 
-// ExtractPaginationWithReader pulls the pagination from an io.Reader
-func ExtractPaginationWithReader(r io.Reader) (*Pagination, error) {
-	doc, err := goquery.NewDocumentFromReader(r)
-	if err != nil {
-		return nil, err
-	}
-	return ExtractPaginationWithDoc(doc)
-}
-
-func extractHasNext(r io.Reader) bool {
-	doc, err := goquery.NewDocumentFromReader(r)
-	panicIfErr(err)
+// hasNext returns true if a page has more pages to show.  This is needed for
+// pagination that only shows if there is another page available, but not how
+// many total pages there are
+func hasNext(r io.Reader) bool {
+	doc := mustNewDocumentFromReader(r)
 
 	var ret bool
 	doc.Find("div.pagination").Find("a.next").EachWithBreak(func(i int, s *goquery.Selection) bool {
@@ -174,8 +203,4 @@ func extractHasNext(r io.Reader) bool {
 		return false
 	})
 	return ret
-}
-
-func extractHasNextWithBytes(r []byte) bool {
-	return extractHasNext(bytes.NewReader(r))
 }

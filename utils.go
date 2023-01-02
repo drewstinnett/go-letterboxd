@@ -4,11 +4,11 @@ import (
 	"errors"
 	"io"
 	"math/rand"
+	"net/url"
 	"strings"
 	"time"
 
 	"github.com/PuerkitoBio/goquery"
-	"github.com/rs/zerolog/log"
 )
 
 // 0 means undefined
@@ -65,7 +65,6 @@ func ParseListArgs(args []string) ([]*ListID, error) {
 
 func panicIfErr(err error) {
 	if err != nil {
-		log.Warn().Err(err).Msg("Error doing something in the test suite")
 		panic(err)
 	}
 }
@@ -90,4 +89,51 @@ func mustNewDocumentFromReader(r io.Reader) *goquery.Document {
 		panic(err)
 	}
 	return doc
+}
+
+func mustParseURL(u string) *url.URL {
+	u = strings.TrimSuffix(u, "/")
+	url, err := url.Parse(u)
+	if err != nil {
+		panic(err)
+	}
+	return url
+}
+
+func min(values ...int) (min int) {
+	if len(values) == 0 {
+		panic("cannot detect a minimum value in an empty slice")
+	}
+
+	min = values[0]
+	for _, v := range values {
+		if v < min {
+			min = v
+		}
+	}
+
+	return min
+}
+
+func max(values ...int) (max int) {
+	if len(values) == 0 {
+		panic("cannot detect a maximum value in an empty slice")
+	}
+
+	max = values[0]
+	for _, v := range values {
+		if v > max {
+			max = v
+		}
+	}
+
+	return max
+}
+
+// stringOr returns a string, given a string and a default. Returns the default if the string is empty
+func stringOr(s, d string) string {
+	if s == "" {
+		return d
+	}
+	return s
 }

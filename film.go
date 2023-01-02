@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"os"
 	"strconv"
 	"strings"
 	"sync"
@@ -13,7 +14,6 @@ import (
 
 	"github.com/PuerkitoBio/goquery"
 	"github.com/go-redis/cache/v8"
-	"github.com/rs/zerolog/log"
 )
 
 // ExternalFilmIDs references 3rd party IDs for a given film
@@ -64,20 +64,12 @@ type FilmServiceOp struct {
 type FilmographyOpt struct {
 	Person     string // Person whos filmography is to be fetched
 	Profession string // Profession of the person (actor, writer, director)
-	// FirstPage  int    // First page to fetch. Defaults to 1
-	// LastPage   int    // Last page to fetch. Defaults to FirstPage. Use -1 to fetch all pages
 }
 
 // List lists out all films using the given options
 func (f *FilmServiceOp) List(ctx context.Context, opts *FilmListOpts) (FilmSet, error) {
-	sortBy := opts.SortBy
-	if sortBy == "" {
-		sortBy = "popular"
-	}
-	pageCount := opts.PageCount
-	if pageCount == 0 {
-		pageCount = 1
-	}
+	sortBy := stringOr(opts.SortBy, "popular")
+	pageCount := max(opts.PageCount, 1)
 
 	// Always pull in the first page, so we can get the right pagination and whatnot
 	allFilms, pagination, err := f.ExtractEnhancedFilmsWithPath(ctx, fmt.Sprintf("/films/ajax/%v/size/small/page/1", sortBy))
@@ -100,16 +92,16 @@ func (f *FilmServiceOp) List(ctx context.Context, opts *FilmListOpts) (FilmSet, 
 
 // Validate ensures that filmography options contains the appropriate fields
 func (f *FilmographyOpt) Validate() error {
-	if f.Person == "" {
+	switch {
+	case f.Person == "":
 		return fmt.Errorf("person is required")
-	}
-	if f.Profession == "" {
+	case f.Profession == "":
 		return fmt.Errorf("profession is required")
-	}
-	if !stringInSlice(f.Profession, Professions) {
+	case !stringInSlice(f.Profession, Professions):
 		return fmt.Errorf("profession must be one of %v", Professions)
+	default:
+		return nil
 	}
-	return nil
 }
 
 // FilmBatchOpts provides options for retrieving a batch of films
@@ -119,77 +111,45 @@ type FilmBatchOpts struct {
 	WatchList []string  `json:"watchlist"`
 }
 
+func loopFilmC(filmsC, userFilmC chan *Film, done, userDone chan error) {
+	for loop := true; loop; {
+		select {
+		case film := <-userFilmC:
+			filmsC <- film
+		case err := <-userDone:
+			if err != nil {
+				done <- err
+			}
+			loop = false
+		}
+	}
+}
+
 // StreamBatch Get a bunch of different films at once and stream them back to the user
-func (f *FilmServiceOp) StreamBatch(ctx context.Context, batchOpts *FilmBatchOpts, filmsC chan *Film, done chan error) { //nolint:golint,gocognit
+func (f *FilmServiceOp) StreamBatch(ctx context.Context, batchOpts *FilmBatchOpts, filmsC chan *Film, done chan error) {
 	defer func() {
 		done <- nil
 	}()
-	// TODREW: Can these next few segments be more generalized?
 	for _, username := range batchOpts.Watched {
 		userFilmC := make(chan *Film)
 		userDone := make(chan error)
 		go f.client.User.StreamWatched(ctx, username, userFilmC, userDone)
-		for loop := true; loop; {
-			select {
-			case film := <-userFilmC:
-				filmsC <- film
-			case err := <-userDone:
-				if err != nil {
-					done <- err
-				}
-				loop = false
-			}
-		}
+		loopFilmC(filmsC, userFilmC, done, userDone)
 	}
 	for _, listID := range batchOpts.List {
 		listFilmC := make(chan *Film)
 		listDone := make(chan error)
 		go f.client.User.StreamList(ctx, listID.User, listID.Slug, listFilmC, listDone)
-		for loop := true; loop; {
-			select {
-			case film := <-listFilmC:
-				filmsC <- film
-			case err := <-listDone:
-				if err != nil {
-					done <- err
-				}
-				loop = false
-			}
-		}
+		loopFilmC(filmsC, listFilmC, done, listDone)
 	}
 
 	for _, user := range batchOpts.WatchList {
 		listFilmC := make(chan *Film)
 		listDone := make(chan error)
 		go f.client.User.StreamWatchList(ctx, user, listFilmC, listDone)
-		for loop := true; loop; {
-			select {
-			case film := <-listFilmC:
-				filmsC <- film
-			case err := <-listDone:
-				if err != nil {
-					done <- err
-				}
-				loop = false
-			}
-		}
+		loopFilmC(filmsC, listFilmC, done, listDone)
 	}
 }
-
-/*
-func filmsWithFilmsInterface(fi []interface{}) (FilmSet, error) {
-	films := FilmSet{}
-	for _, i := range fi {
-		var d Film
-		err := mapstructure.Decode(i, &d)
-		if err != nil {
-			return nil, err
-		}
-		films = append(films, &d)
-	}
-	return films, nil
-}
-*/
 
 // ExtractFilmsWithPath Given a url path, return a list of films it contains
 func (f *FilmServiceOp) ExtractFilmsWithPath(ctx context.Context, path string) (FilmSet, *Pagination, error) {
@@ -198,15 +158,7 @@ func (f *FilmServiceOp) ExtractFilmsWithPath(ctx context.Context, path string) (
 	// var inCache bool
 	var pData *PageData
 	var resp *Response
-
-	/*
-		if ctx == nil {
-			ctx = context.Background()
-		}
-	*/
-
 	var films FilmSet
-
 	var url string
 	if strings.HasPrefix(path, "http") {
 		url = path
@@ -222,19 +174,6 @@ func (f *FilmServiceOp) ExtractFilmsWithPath(ctx context.Context, path string) (
 	}
 	defer dclose(resp.Body) // nolint:golint,bodyclose
 	films = pData.Data.(FilmSet)
-	/*
-		if f.client.Cache != nil {
-			if err := f.client.Cache.Set(&cache.Item{
-				Ctx:   ctx,
-				Key:   key,
-				Value: pData,
-				TTL:   time.Hour * 6,
-			}); err != nil {
-				log.Warn().Err(err).Msg("Error Writing Cache")
-			}
-		}
-	*/
-
 	return films, &pData.Pagination, nil
 }
 
@@ -245,7 +184,6 @@ func (f *FilmServiceOp) ExtractEnhancedFilmsWithPath(ctx context.Context, path s
 		return nil, pagination, err
 	}
 
-	log.Debug().Msg("Launching EnhanceFilmList")
 	err = f.client.Film.EnhanceFilmList(ctx, &films)
 	if err != nil {
 		return nil, pagination, err
@@ -258,7 +196,6 @@ func filmWithCache(c *cache.Cache, key string) *Film {
 	ctx := context.Background()
 	var retFilm *Film
 	if c != nil {
-		log.Debug().Msg("Using cache for lookup")
 		if err := c.Get(ctx, key, &retFilm); err == nil {
 			return retFilm
 		}
@@ -275,20 +212,8 @@ func (f *FilmServiceOp) Get(ctx context.Context, slug string) (*Film, error) {
 		ctx = context.Background()
 	}
 	retFilm := filmWithCache(f.client.Cache, key)
-	/*
-		if f.client.Cache != nil {
-			log.Debug().Msg("Using cache for lookup")
-			if err := f.client.Cache.Get(ctx, key, &retFilm); err == nil {
-				log.Debug().Str("key", key).Msg("Found film in cache")
-				inCache = true
-			} else {
-				log.Debug().Err(err).Str("key", key).Msg("Found NOT film in cache")
-			}
-		}
-	*/
 
 	if retFilm == nil {
-		log.Debug().Str("key", key).Msg("Film not in cache, fetching from Letterboxd.com")
 		req, err := http.NewRequest("GET", fmt.Sprintf("%s/film/%s", f.client.baseURL, slug), nil)
 		if err != nil {
 			return nil, err
@@ -300,7 +225,6 @@ func (f *FilmServiceOp) Get(ctx context.Context, slug string) (*Film, error) {
 		defer dclose(resp.Body)
 		retFilmP := *item.Data.(*Film)
 		retFilm = &retFilmP
-		log.Debug().Str("key", key).Msg("Film fetched from Letterboxd.com")
 
 		if f.client.Cache != nil {
 			if err := f.client.Cache.Set(&cache.Item{
@@ -309,7 +233,7 @@ func (f *FilmServiceOp) Get(ctx context.Context, slug string) (*Film, error) {
 				Value: retFilm,
 				TTL:   time.Hour * 24 * 7,
 			}); err != nil {
-				log.Warn().Err(err).Msg("Error Writing Cache")
+				fmt.Fprintf(os.Stderr, "Error writing cache: %v", err)
 			}
 		}
 	}
@@ -339,14 +263,12 @@ func (f *FilmServiceOp) Filmography(ctx context.Context, opt *FilmographyOpt) (F
 	// This is a bit costly, parallel time?
 	err = f.client.Film.EnhanceFilmList(ctx, &partialFilms)
 	if err != nil {
-		log.Warn().Err(err).Msg("Failed to enhance film list")
 		return nil, err
 	}
 
 	films = append(films, partialFilms...)
 	err = f.client.Film.EnhanceFilmList(ctx, &films)
 	if err != nil {
-		log.Warn().Err(err).Msg("Failed to enhance film list")
 		return nil, err
 	}
 
@@ -386,9 +308,8 @@ func (f *FilmServiceOp) EnhanceFilmList(ctx context.Context, films *FilmSet) err
 		go func(film *Film) {
 			defer wg.Done()
 			guard <- struct{}{}
-			log.Debug().Str("slug", film.Slug).Msg("Looking up film")
 			if err := f.EnhanceFilm(ctx, film); err != nil {
-				log.Warn().Err(err).Msg("Failed to get external IDs")
+				fmt.Fprintf(os.Stderr, "Failed to get external IDs: %v", err)
 			}
 			<-guard
 		}(film)
@@ -504,15 +425,11 @@ func (f *FilmServiceOp) GetWatchedIMDBIDs(ctx context.Context, username string) 
 		case film := <-wfilmC:
 			if film.ExternalIDs != nil {
 				watchedIDs = append(watchedIDs, film.ExternalIDs.IMDB)
-			} else {
-				log.Debug().Str("title", film.Title).Msg("No external IDs, skipping")
 			}
 		case err := <-wdoneC:
 			if err != nil {
-				log.Error().Err(err).Msg("Failed to get watched films")
 				wdoneC <- err
 			} else {
-				log.Debug().Msg("Finished getting watched films")
 				loop = false
 			}
 		}
