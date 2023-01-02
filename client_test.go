@@ -10,8 +10,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/rs/zerolog"
-	"github.com/rs/zerolog/log"
 	"github.com/stretchr/testify/require"
 
 	"github.com/go-redis/cache/v8"
@@ -35,8 +33,6 @@ func FileToResponseWriter(f string, w http.ResponseWriter) {
 }
 
 func setup() {
-	zerolog.SetGlobalLevel(zerolog.InfoLevel)
-	log.Logger = log.With().Caller().Logger().Output(zerolog.ConsoleWriter{Out: os.Stderr})
 	srv = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch {
 		case strings.Contains(r.URL.Path, "/dave/list/official-top-250-narrative-feature-films/page/"):
@@ -70,9 +66,7 @@ func setup() {
 		case r.URL.Path == "/someguy":
 			FileToResponseWriter("testdata/user/user.html", w)
 		default:
-			log.Warn().
-				Str("url", r.URL.String()).
-				Msg("unexpected request")
+			fmt.Fprintf(os.Stderr, "unexpect url: %v", r.URL.String())
 			w.WriteHeader(http.StatusNotFound)
 		}
 		defer r.Body.Close()

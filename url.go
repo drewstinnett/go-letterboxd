@@ -6,8 +6,6 @@ import (
 	"fmt"
 	"net/url"
 	"strings"
-
-	"github.com/rs/zerolog/log"
 )
 
 // URLService is an interface for defining methods on a URL
@@ -86,7 +84,6 @@ func normalizeURLPath(ourl string) (string, error) {
 	}
 	u, err := url.Parse(ourl)
 	if err != nil {
-		log.Debug().Err(err).Msg("Error parsing URL")
 		return "", err
 	}
 	if !strings.Contains(u.Hostname(), "letterboxd.com") {

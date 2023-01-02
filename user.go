@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"os"
 	"sort"
 	"strconv"
 	"strings"
@@ -13,7 +14,6 @@ import (
 	"time"
 
 	"github.com/PuerkitoBio/goquery"
-	"github.com/rs/zerolog/log"
 )
 
 // UserService provides an interface to user methods
@@ -99,10 +99,9 @@ func ExtractUser(r io.Reader) (interface{}, *Pagination, error) {
 					countS := strings.TrimSpace(s.Text())
 					countS = strings.ReplaceAll(countS, ",", "")
 					count, err := strconv.Atoi(countS)
-					if err != nil {
-						log.Warn().Err(err).Msg("Failed to parse film count")
+					if err == nil {
+						user.WatchedFilmCount = count
 					}
-					user.WatchedFilmCount = count
 				})
 				// user.WatchedFilmCount, _ = s.AttrOr("data-count", "").Atoi()
 			}
@@ -134,10 +133,8 @@ func (u *UserServiceOp) Diary(ctx context.Context, username string) (DiaryEntrie
 			items = append(items, d)
 		case err := <-dc:
 			if err != nil {
-				log.Error().Err(err).Msg("Failed to get watched films")
 				dc <- err
 			} else {
-				log.Debug().Msg("Finished getting watched films")
 				loop = false
 			}
 		}
@@ -154,10 +151,8 @@ func (u *UserServiceOp) StreamDiary(ctx context.Context, username string, dec ch
 	var err error
 	var pagination *Pagination
 	defer func() {
-		log.Debug().Msg("Closing StreamWatched")
 		done <- nil
 	}()
-	log.Debug().Msg("About to start streaming fims")
 
 	// Get the first page. This seeds the pagination.
 	firstEntries, pagination, err := u.extractDiaryEntryWithPath(username, 1)
@@ -196,10 +191,6 @@ func (u *UserServiceOp) StreamDiary(ctx context.Context, username string, dec ch
 				defer wg.Done()
 				pfilms, _, err := u.extractDiaryEntryWithPath(username, i)
 				if err != nil {
-					log.Warn().
-						Int("page", i).
-						Str("user", username).
-						Msg("Failed to extract diary entries")
 					return
 				}
 				for _, film := range pfilms {
@@ -224,12 +215,12 @@ func (u *UserServiceOp) Profile(ctx context.Context, userID string) (*User, *Res
 
 	userD.Following, _, err = u.Following(ctx, userID)
 	if err != nil {
-		log.Warn().Str("user", userID).Msg("Could not get user following")
+		fmt.Fprintf(os.Stderr, "could not get user following: %v", userID)
 	}
 
 	userD.Followers, _, err = u.Followers(ctx, userID)
 	if err != nil {
-		log.Warn().Str("user", userID).Msg("Could not get user followers")
+		fmt.Fprintf(os.Stderr, "could not get user followers: %v", userID)
 	}
 
 	return userD, resp, nil
@@ -290,7 +281,6 @@ func (u *UserServiceOp) WatchList(ctx context.Context, userID string) (FilmSet, 
 	page := 1
 	// TODREW: This can loop forever
 	for {
-		log.Info().Int("page", page).Msg("pagination")
 		req, err := http.NewRequest("GET", fmt.Sprintf("%s/%s/watchlist/page/%d", u.client.baseURL, userID, page), nil)
 		if err != nil {
 			return nil, nil, err
@@ -302,7 +292,7 @@ func (u *UserServiceOp) WatchList(ctx context.Context, userID string) (FilmSet, 
 		partialFilms := items.Data.(FilmSet)
 		err = u.client.Film.EnhanceFilmList(ctx, &partialFilms)
 		if err != nil {
-			log.Warn().Err(err).Msg("Failed to enhance film list")
+			fmt.Fprintf(os.Stderr, "failed to enhance film list: %v", err)
 		}
 		previews = append(previews, partialFilms...)
 		if items.Pagination.IsLast {
@@ -346,25 +336,7 @@ func (u *UserServiceOp) StreamWatched(ctx context.Context, userID string, rchan 
 		}
 	}
 	// Gather up the middle pages here
-	if pagination.TotalPages > 2 {
-		pagination.TotalItems += ((pagination.TotalPages - 2) * itemsPerFullPage)
-		middlePageCount := pagination.TotalPages - 2
-		wg := sync.WaitGroup{}
-		wg.Add(middlePageCount)
-		for i := 2; i < pagination.TotalPages; i++ {
-			go func(i int) {
-				defer wg.Done()
-				pfilms, _, err := u.client.Film.ExtractEnhancedFilmsWithPath(ctx, fmt.Sprintf("%s/%s/films/page/%v/", u.client.baseURL, userID, i))
-				if err != nil {
-					return
-				}
-				for _, film := range pfilms {
-					rchan <- film
-				}
-			}(i)
-		}
-		wg.Wait()
-	}
+	u.client.slurpMiddlePages(ctx, userID, pagination, itemsPerFullPage, rchan, "films")
 }
 
 // ExtractUserFilms returns a list of films from an io.Reader
@@ -378,7 +350,6 @@ func ExtractUserFilms(r io.Reader) (interface{}, *Pagination, error) {
 	previews := previewsWithDoc(doc)
 	pagination, err := ExtractPagination(&pageBuf)
 	if err != nil {
-		log.Warn().Msg("No pagination data found, assuming it to be a single page")
 		pagination = &Pagination{
 			CurrentPage: 1,
 			NextPage:    1,
@@ -400,7 +371,6 @@ func (u *UserServiceOp) StreamList(
 	var err error
 	var pagination *Pagination
 	defer func() {
-		log.Debug().Msg("Closing StreamList")
 		done <- nil
 	}()
 	firstFilms, pagination, err := u.client.Film.ExtractEnhancedFilmsWithPath(ctx, fmt.Sprintf("%s/%s/list/%s/page/1", u.client.baseURL, username, slug))
@@ -438,7 +408,6 @@ func (u *UserServiceOp) StreamList(
 				defer wg.Done()
 				pfilms, _, err := u.client.Film.ExtractEnhancedFilmsWithPath(ctx, fmt.Sprintf("%s/%s/list/%v/page/%v/", u.client.baseURL, username, slug, i))
 				if err != nil {
-					log.Warn().Int("page", i).Str("user", username).Msg("Failed to extract films")
 					return
 				}
 				for _, film := range pfilms {
@@ -460,7 +429,6 @@ func (u *UserServiceOp) StreamWatchList(
 	var err error
 	var pagination *Pagination
 	defer func() {
-		log.Debug().Msg("Closing StreamWatchList")
 		done <- nil
 	}()
 	firstFilms, pagination, err := u.client.Film.ExtractEnhancedFilmsWithPath(ctx, fmt.Sprintf("%s/%s/watchlist/page/1", u.client.baseURL, username))
@@ -488,26 +456,7 @@ func (u *UserServiceOp) StreamWatchList(
 		}
 	}
 	// Gather up the middle pages here
-	if pagination.TotalPages > 2 {
-		pagination.TotalItems += ((pagination.TotalPages - 2) * itemsPerFullPage)
-		middlePageCount := pagination.TotalPages - 2
-		wg := sync.WaitGroup{}
-		wg.Add(middlePageCount)
-		for i := 2; i < pagination.TotalPages; i++ {
-			go func(i int) {
-				defer wg.Done()
-				pfilms, _, err := u.client.Film.ExtractEnhancedFilmsWithPath(ctx, fmt.Sprintf("%s/%s/watchlist/page/%v/", u.client.baseURL, username, i))
-				if err != nil {
-					log.Warn().Int("page", i).Str("user", username).Msg("Failed to extract films")
-					return
-				}
-				for _, film := range pfilms {
-					rchan <- film
-				}
-			}(i)
-		}
-		wg.Wait()
-	}
+	u.client.slurpMiddlePages(ctx, username, pagination, itemsPerFullPage, rchan, "watchlist")
 }
 
 func (u *UserServiceOp) extractDiaryEntryWithPath(username string, page int) (DiaryEntries, *Pagination, error) {
@@ -548,10 +497,9 @@ func NewDiaryEntry(s *goquery.Selection) *DiaryEntry {
 	val, ok = s.Find("a").Attr("data-rating")
 	if ok {
 		rating, err := strconv.Atoi(val)
-		if err != nil {
-			log.Warn().Msg("Error getting rating")
+		if err == nil {
+			entry.Rating = &rating
 		}
-		entry.Rating = &rating
 	}
 
 	// Figure out if a date was a rewatch
@@ -566,9 +514,7 @@ func NewDiaryEntry(s *goquery.Selection) *DiaryEntry {
 	val, ok = s.Find("a").Attr("data-film-poster")
 	if ok {
 		parts := strings.Split(val, "/")
-		if len(parts) != 5 {
-			log.Warn().Interface("parts", parts).Msg("Hmmm...error converting film poster to slug")
-		} else {
+		if len(parts) == 5 {
 			entry.Slug = &parts[2]
 		}
 	}
@@ -585,7 +531,7 @@ func (u *UserServiceOp) diaryEntriesWithDoc(doc *goquery.Document) DiaryEntries 
 		// This one is a little harder to fetch
 		entry.Film, err = u.client.Film.Get(context.TODO(), *entry.Slug)
 		if err != nil {
-			log.Warn().Err(err).Msg("Error looking up film")
+			fmt.Fprintf(os.Stderr, "error looking up film: %v", err)
 		}
 
 		entries = append(entries, entry)
