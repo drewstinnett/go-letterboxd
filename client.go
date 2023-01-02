@@ -166,8 +166,6 @@ func (c *Client) getFromCache(ctx context.Context, key string) *PageData {
 
 func (c *Client) setCache(ctx context.Context, key string, pData PageData) {
 	if c.Cache != nil {
-		// max, min := 72, 24
-		// cacheFor := rand.Intn(max-min) + min // nolint:golint,gosec
 		if err := c.Cache.Set(&cache.Item{
 			Ctx:   ctx,
 			Key:   key,

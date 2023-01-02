@@ -93,6 +93,12 @@ func TestPopulateRemainingPages(t *testing.T) {
 	}
 }
 
+func TestPopulateRemainingPagesShuffle(t *testing.T) {
+	got := populateRemainingPages(5, 7, true)
+	require.NotNil(t, got)
+	require.Equal(t, 6, len(got))
+}
+
 func TestMin(t *testing.T) {
 	got := min(2, 1, 3)
 	require.Equal(t, 1, got)

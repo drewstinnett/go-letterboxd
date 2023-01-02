@@ -130,7 +130,6 @@ func (f *FilmServiceOp) StreamBatch(ctx context.Context, batchOpts *FilmBatchOpt
 	defer func() {
 		done <- nil
 	}()
-	// TODREW: Can these next few segments be more generalized?
 	for _, username := range batchOpts.Watched {
 		userFilmC := make(chan *Film)
 		userDone := make(chan error)
